@@ -1,7 +1,12 @@
 *.suo
 *.user
+*.manifest
 
 Thumbs.db
 
+/Trailbreaker/bin
+/Trailbreaker/obj
+/Trailbreaker/debug
 /bin
+/obj
 /debug

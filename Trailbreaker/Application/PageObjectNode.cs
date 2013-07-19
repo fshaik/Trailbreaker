@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using System.Windows.Forms;
 using System.Xml;
 
 namespace Trailbreaker.RecorderApplication
@@ -15,6 +17,16 @@ namespace Trailbreaker.RecorderApplication
             : base(parent, PageObjectString)
         {
             Name = name;
+        }
+
+        public override TreeNode GetTreeNode()
+        {
+            var node = new TreeNode(Name);
+            foreach (WebElementNode child in Children)
+            {
+                node.Nodes.Add(child.GetTreeNode());
+            }
+            return node;
         }
 
         public override void WriteToXml(XmlTextWriter writer)
@@ -62,6 +74,39 @@ namespace Trailbreaker.RecorderApplication
         public override bool Contains(UserAction userAction)
         {
             return Name == userAction.Page;
+        }
+
+        public override void BuildRaw()
+        {
+            string path = Exporter.outputPath + "\\PageObjects\\" + Name + ".cs";
+
+            FileStream fileStream = File.Create(path);
+            StreamWriter writer = new StreamWriter(fileStream);
+
+            writer.WriteLine("using Bumblebee.Implementation;");
+            writer.WriteLine("using Bumblebee.Interfaces;");
+            writer.WriteLine("using Bumblebee.Setup;");
+            writer.WriteLine("using OpenQA.Selenium;");
+            writer.WriteLine("");
+            writer.WriteLine("namespace " + Exporter.pageObjectLibraryName);
+            writer.WriteLine("{");
+            writer.WriteLine("\tpublic class " + Name + " : Block");
+            writer.WriteLine("\t{");
+            writer.WriteLine("\t\tpublic " + Name + "(Session session)");
+            writer.WriteLine("\t\t\t: base(session)");
+            writer.WriteLine("\t\t{");
+            writer.WriteLine("\t\t}");
+
+            foreach (WebElementNode node in Children)
+            {
+                node.BuildRaw(writer);
+            }
+
+            writer.WriteLine("\t}");
+            writer.WriteLine("}");
+
+            writer.Close();
+            fileStream.Close();
         }
 
         public StringBuilder Build()

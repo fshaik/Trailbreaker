@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Windows.Forms;
 using System.Xml;
 using Roslyn.Services;
 
@@ -14,6 +15,8 @@ namespace Trailbreaker.RecorderApplication
 
         public static string outputPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrailbreakerOutput");
+        public static string pageObjectsFolder = "\\PageObjects\\";
+        public static string testsFolder = "\\Tests\\";
 
         public static IWorkspace workspace = null;
         public static string solutionPath = null;
@@ -23,7 +26,7 @@ namespace Trailbreaker.RecorderApplication
         public static IProject pageObjectTestLibrary = null;
         public static string treeName = "MBRegressionLibrary.xml";
 
-        public static void Export(List<UserAction> actions, FolderNode head, string testName)
+        private static void UpdateTreeWithActions(List<UserAction> actions, FolderNode head)
         {
             //Update the head nodes with the user-altered actions (via GUI).
             foreach (UserAction action in actions)
@@ -33,7 +36,10 @@ namespace Trailbreaker.RecorderApplication
                     Debug.WriteLine("The action was not able to be updated to the XML head!");
                 }
             }
+        }
 
+        private static void WriteTreeToXML(FolderNode head)
+        {
             //Write the nodes (via tree root node) to the XML library.
             Directory.CreateDirectory(outputPath);
             var writer = new XmlTextWriter(outputPath + "\\" + treeName, null);
@@ -43,6 +49,12 @@ namespace Trailbreaker.RecorderApplication
             writer.WriteEndDocument();
             writer.Flush();
             writer.Close();
+        }
+
+        public static void ExportToVisualStudio(List<UserAction> actions, FolderNode head, string testName)
+        {
+            UpdateTreeWithActions(actions, head);
+            WriteTreeToXML(head);
 
             //Generate the page objects.
             IEnumerable<IProject> projects;
@@ -69,6 +81,31 @@ namespace Trailbreaker.RecorderApplication
                                                 "Saved a new test!");
                 Debug.WriteLine("SUCCESSFULLY ADDED A TEST: " + result.ToString());
             }
+        }
+
+        public static void ExportToOutputFolder(List<UserAction> actions, FolderNode head, string testName)
+        {
+            UpdateTreeWithActions(actions, head);
+            WriteTreeToXML(head);
+
+            if (!Directory.Exists(outputPath + pageObjectsFolder))
+            {
+                Directory.CreateDirectory(outputPath + pageObjectsFolder);
+            }
+
+            if (!Directory.Exists(outputPath + testsFolder))
+            {
+                Directory.CreateDirectory(outputPath + testsFolder);
+            }
+
+            head.BuildRaw();
+            if (actions.Count > 1)
+            {
+                CreateTestRaw(actions, testName);
+            }
+
+            MessageBox.Show(actions.Count + " new page objects " + (actions.Count > 1 ? " and a new test " : "") + "were exported to \"" + outputPath + "\"!",
+                                    "Export to Output Folder", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
         }
 
         public static FolderNode LoadPageObjectTree()
@@ -158,7 +195,61 @@ namespace Trailbreaker.RecorderApplication
             return false;
         }
 
-        public static IProject CreateTest(IProject project, List<UserAction> actions, string classname)
+        private static void CreateTestRaw(List<UserAction> actions, string testName)
+        {
+            string path = Exporter.outputPath + "\\Tests\\" + testName + ".cs";
+
+            FileStream fileStream = File.Create(path);
+            StreamWriter writer = new StreamWriter(fileStream);
+
+            writer.WriteLine("using System;");
+            writer.WriteLine("using MBRegressionLibrary.Base;");
+            writer.WriteLine("using MBRegressionLibrary.Tests.Tests.BusinessMode;");
+            writer.WriteLine("using MbUnit.Framework;");
+            writer.WriteLine("using " + pageObjectLibraryName + ";");
+            writer.WriteLine("");
+            writer.WriteLine("namespace " + pageObjectTestLibraryName);
+            writer.WriteLine("{");
+            writer.WriteLine("\t[Parallelizable]");
+            writer.WriteLine("\tpublic class " + testName + "Test : AbstractBusinessModeTestSuite");
+            writer.WriteLine("\t{");
+            writer.WriteLine("\t\t[Test]");
+            writer.WriteLine("\t\tpublic void Run" + testName + "Test()");
+            writer.WriteLine("\t\t{");
+            writer.WriteLine(
+                "\t\t\tSession.NavigateTo<" + actions[0].Page +
+                ">(\"https://dev7.mindbodyonline.com/ASP/adm/home.asp?studioid=-40000\");");
+
+            foreach (UserAction action in actions)
+            {
+                if (action.Node.ToLower() == "input" && action.Type.ToLower() == "checkbox")
+                {
+                    writer.WriteLine("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Name +
+                                   ".Toggle();");
+                }
+                else if (action.Node.ToLower() == "input" && action.Type.ToLower() != "button")
+                {
+                    writer.WriteLine("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Name +
+                                   ".EnterText(\"" + action.Text + "\");");
+                }
+                else
+                {
+                    writer.WriteLine("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Name +
+                                   ".Click();");
+                }
+
+                writer.WriteLine("\t\t\tSession.Driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(1));");
+            }
+
+            writer.WriteLine("\t\t}");
+            writer.WriteLine("\t}");
+            writer.WriteLine("}");
+
+            writer.Close();
+            fileStream.Close();
+        }
+
+        private static IProject CreateTest(IProject project, List<UserAction> actions, string classname)
         {
             var builder = new StringBuilder();
 

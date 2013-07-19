@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Text;
+using System.Windows.Forms;
 using System.Xml;
 
 namespace Trailbreaker.RecorderApplication
@@ -23,6 +25,11 @@ namespace Trailbreaker.RecorderApplication
             ToName = toname;
         }
 
+        public override TreeNode GetTreeNode()
+        {
+            return new TreeNode(Path);
+        }
+
         public override void WriteToXml(XmlTextWriter writer)
         {
             writer.WriteStartElement(Label);
@@ -41,6 +48,35 @@ namespace Trailbreaker.RecorderApplication
                 userAction.IsNamed = true;
                 userAction.Name = Name;
             }
+        }
+
+        public void BuildRaw(StreamWriter writer)
+        {
+            writer.WriteLine("");
+
+            if (Node.ToLower() == "input" && Type.ToLower() == "checkbox")
+            {
+                writer.WriteLine("\t\tpublic ICheckbox<" + ToName + "> " + Name);
+                writer.WriteLine("\t\t{");
+                writer.WriteLine("\t\t\tget { return new Checkbox<" + ToName + ">(this, By.XPath(\"" +
+                               Path.Replace("\"", "\\\"") + "\")); }");
+            }
+            else if (Node.ToLower() == "input" && Type.ToLower() != "button")
+            {
+                writer.WriteLine("\t\tpublic ITextField<" + ToName + "> " + Name);
+                writer.WriteLine("\t\t{");
+                writer.WriteLine("\t\t\tget { return new TextField<" + ToName + ">(this, By.XPath(\"" +
+                               Path.Replace("\"", "\\\"") + "\")); }");
+            }
+            else
+            {
+                writer.WriteLine("\t\tpublic IClickable<" + ToName + "> " + Name);
+                writer.WriteLine("\t\t{");
+                writer.WriteLine("\t\t\tget { return new Clickable<" + ToName + ">(this, By.XPath(\"" +
+                               Path.Replace("\"", "\\\"") + "\")); }");
+            }
+
+            writer.WriteLine("\t\t}");
         }
 
         public StringBuilder Build(StringBuilder builder)

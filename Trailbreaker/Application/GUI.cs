@@ -15,7 +15,8 @@ namespace Trailbreaker.RecorderApplication
         private const int GuiSeparator = 25;
         private readonly List<UserAction> actions = new List<UserAction>();
         private readonly MenuItem enterTestName = new MenuItem("Enter Test Name...");
-        private readonly Button export = new Button();
+        private readonly Button exportToVisualStudio = new Button();
+        private readonly Button exportToOutputFolder = new Button();
         private readonly MenuItem fileMenu = new MenuItem("File");
         private readonly FolderNode head = Exporter.LoadPageObjectTree();
         private readonly ListView list = new ListView();
@@ -36,8 +37,17 @@ namespace Trailbreaker.RecorderApplication
         private bool recording;
         private string testName = "MyDescriptiveTestName";
 
+        private TreeView tree = new TreeView();
+
         public GUI()
         {
+            tree.Location = new Point(450, 300);
+            tree.Size = new Size(300, 400);
+            tree.Text = "Page Object Tree";
+            tree.Scrollable = true;
+            tree.Nodes.Add(head.GetTreeNode());
+            tree.Nodes[0].Expand();
+
             EnterTestName(null, null);
 
             var worker = new BackgroundWorker();
@@ -109,17 +119,25 @@ namespace Trailbreaker.RecorderApplication
                 offset += GuiSeparator;
             }
 
-            export.Text = "Export";
-            export.Location = new Point(GuiMargin, GuiMargin*7 + GuiSeparator*2 + 300*2);
-            export.Click += doExport;
-            offset += 30;
+            exportToVisualStudio.Text = "Export to Visual Studio";
+            exportToVisualStudio.Location = new Point(GuiMargin, GuiMargin * 7 + GuiSeparator * 2 + 300 * 2);
+            exportToVisualStudio.Width = 150;
+            exportToVisualStudio.Click += ExportToVisualStudio;
+
+            exportToOutputFolder.Text = "Export to Text Files";
+            exportToOutputFolder.Location = new Point(GuiMargin*2 + 150, GuiMargin * 7 + GuiSeparator * 2 + 300 * 2);
+            exportToOutputFolder.Width = 150;
+            exportToOutputFolder.Click += ExportToOutputFolder;
 
             Controls.Add(solutionLabel);
             Controls.Add(testNameLabel);
             Controls.Add(list);
             Controls.Add(record);
             Controls.Add(rlist);
-            Controls.Add(export);
+            Controls.Add(exportToVisualStudio);
+            Controls.Add(exportToOutputFolder);
+
+            Controls.Add(tree);
 
             foreach (Label l in userActionLabels)
             {
@@ -148,8 +166,12 @@ namespace Trailbreaker.RecorderApplication
 
         private void SelectSolution(object o, EventArgs e)
         {
+            Debug.WriteLine("Select!");
             Exporter.workspace = null;
+            Exporter.pageObjectLibrary = null;
+            Exporter.pageObjectTestLibrary = null;
             Start.FindSolution();
+            Debug.WriteLine("Selected");
         }
 
         private void EnterTestName(object o, EventArgs e)
@@ -325,7 +347,7 @@ namespace Trailbreaker.RecorderApplication
             }
         }
 
-        private void doExport(Object sender, EventArgs e)
+        private bool ActionsAreNamed()
         {
             foreach (UserAction action in actions)
             {
@@ -335,10 +357,27 @@ namespace Trailbreaker.RecorderApplication
                         "You must define a unique name for each action! Unnamed actions are highlighted red.",
                         "Incomplete Naming Scheme",
                         MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    return;
+                    return false;
                 }
             }
-            Exporter.Export(actions, head, testName);
+            return true;
+        }
+
+        private void ExportToVisualStudio(Object sender, EventArgs e)
+        {
+            if (ActionsAreNamed())
+            {
+                Exporter.ExportToVisualStudio(actions, head, testName);
+            }
+        }
+
+        private void ExportToOutputFolder(Object sender, EventArgs e)
+        {
+
+            if (ActionsAreNamed())
+            {
+                Exporter.ExportToOutputFolder(actions, head, testName);
+            }
         }
     }
 }

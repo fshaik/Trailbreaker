@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Windows.Forms;
 using System.Xml;
 using Roslyn.Compilers.CSharp;
 using Roslyn.Services;
@@ -16,6 +17,16 @@ namespace Trailbreaker.RecorderApplication
         {
             Parent = parent;
             Label = label;
+        }
+
+        public virtual TreeNode GetTreeNode()
+        {
+            TreeNode node = new TreeNode(Label);
+            foreach (FolderNode child in Children)
+            {
+                node.Nodes.Add(child.GetTreeNode());
+            }
+            return node;
         }
 
         public virtual void WriteToXml(XmlTextWriter writer)
@@ -67,6 +78,14 @@ namespace Trailbreaker.RecorderApplication
                 }
             }
             return false;
+        }
+
+        public virtual void BuildRaw()
+        {
+            foreach (FolderNode node in Children)
+            {
+                node.BuildRaw();
+            }
         }
 
         public IProject Build(IProject project)
