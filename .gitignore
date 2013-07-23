@@ -1,6 +1,9 @@
 *.suo
 *.user
 *.manifest
+*.pdb
+*.exe
+*.txt
 
 Thumbs.db
 
@@ -10,3 +13,6 @@ Thumbs.db
 /bin
 /obj
 /debug
+*/bin
+*/obj
+*/debug

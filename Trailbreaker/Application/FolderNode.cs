@@ -9,19 +9,19 @@ namespace Trailbreaker.RecorderApplication
 {
     public class FolderNode
     {
-        public readonly string Label;
+        public readonly string Title;
         public List<FolderNode> Children = new List<FolderNode>();
         public FolderNode Parent;
 
-        public FolderNode(FolderNode parent, string label)
+        public FolderNode(FolderNode parent, string title)
         {
             Parent = parent;
-            Label = label;
+            Title = title;
         }
 
         public virtual TreeNode GetTreeNode()
         {
-            TreeNode node = new TreeNode(Label);
+            TreeNode node = new TreeNode(Title);
             foreach (FolderNode child in Children)
             {
                 node.Nodes.Add(child.GetTreeNode());
@@ -31,7 +31,7 @@ namespace Trailbreaker.RecorderApplication
 
         public virtual void WriteToXml(XmlTextWriter writer)
         {
-            writer.WriteStartElement(Label);
+            writer.WriteStartElement(Title);
             foreach (FolderNode element in Children)
             {
                 element.WriteToXml(writer);
@@ -118,14 +118,14 @@ namespace Trailbreaker.RecorderApplication
                         Debug.WriteLine("Document " + document.Name + " exists!");
                         if (document.Name == ponode.Name + ".cs")
                         {
-                            doc = document.UpdateText(Syntax.ParseCompilationUnit(ponode.Build().ToString()).GetText());
+                            doc = document.UpdateText(Syntax.ParseCompilationUnit(ponode.BuildString().ToString()).GetText());
                             break;
                         }
                     }
                     if (doc == null)
                     {
                         Debug.WriteLine("Document " + ponode.Name + " doesn't exist!");
-                        doc = cproject.AddDocument(ponode.Name, ponode.Build().ToString());
+                        doc = cproject.AddDocument(ponode.Name, ponode.BuildString().ToString());
                     }
 
 //                    doc.Organize();

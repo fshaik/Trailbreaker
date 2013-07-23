@@ -1,15 +1,22 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics;
+using System.Runtime.Serialization;
 
 namespace Trailbreaker.RecorderApplication
 {
     [DataContract]
     public class UserAction
     {
-        public bool IsNamed = false;
+        public bool IsLabeled = false;
         public string ToPage;
+
+        [DataMember(Name = "Label", IsRequired = true)]
+        public string Label { get; set; }
 
         [DataMember(Name = "Name", IsRequired = true)]
         public string Name { get; set; }
+
+        [DataMember(Name = "Id", IsRequired = true)]
+        public string Id { get; set; }
 
         [DataMember(Name = "Page", IsRequired = true)]
         public string Page { get; set; }
@@ -29,6 +36,21 @@ namespace Trailbreaker.RecorderApplication
         public override string ToString()
         {
             return Path;
+        }
+
+        public void Print()
+        {
+            Debug.WriteLine("Label: " + Label);
+            Debug.WriteLine("Name: " + Name);
+            Debug.WriteLine("Id: " + Id);
+            Debug.WriteLine("Page: " + Page);
+            Debug.WriteLine("Node: " + Node);
+            Debug.WriteLine("Type: " + Type);
+            Debug.WriteLine("Path: " + Path);
+            Debug.WriteLine("Text: " + Text);
+//            Debug.WriteLine("Label: " + ToPage);
+//            Debug.WriteLine("Label: " + IsLabeled);
+            Debug.WriteLine("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
         }
     }
 }

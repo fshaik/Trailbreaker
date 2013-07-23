@@ -206,6 +206,7 @@ namespace Trailbreaker.RecorderApplication
 
         public void AddAction(UserAction userAction)
         {
+            userAction.Print();
             if (recording)
             {
                 actions.Add(userAction);
@@ -238,7 +239,7 @@ namespace Trailbreaker.RecorderApplication
                     head.UpdateAction(ref action);
                     actions[i] = action;
 
-                    if (!actions[i].IsNamed)
+                    if (!actions[i].IsLabeled)
                     {
                         list.Items[i].BackColor = Color.Red;
                     }
@@ -274,10 +275,10 @@ namespace Trailbreaker.RecorderApplication
         private void UpdateSelectedName(Object sender, EventArgs e)
         {
             UserAction current = actions[list.SelectedIndices[0]];
-            current.IsNamed = true;
+            current.IsLabeled = true;
             for (int i = 0; i < actions.Count; i++)
             {
-                if (!actions[i].IsNamed)
+                if (!actions[i].IsLabeled)
                 {
                     list.Items[i].BackColor = Color.Red;
                 }
@@ -286,7 +287,7 @@ namespace Trailbreaker.RecorderApplication
                     list.Items[i].BackColor = Color.White;
                 }
             }
-            current.Name = userActionFields[0].Text;
+            current.Label = userActionFields[0].Text;
             current.Page = userActionFields[1].Text;
             current.Node = userActionFields[2].Text;
             current.Type = userActionFields[3].Text;
@@ -297,7 +298,7 @@ namespace Trailbreaker.RecorderApplication
         private void UpdateSelected(Object sender, EventArgs e)
         {
             UserAction current = actions[list.SelectedIndices[0]];
-            current.Name = userActionFields[0].Text;
+            current.Label = userActionFields[0].Text;
             current.Page = userActionFields[1].Text;
             current.Node = userActionFields[2].Text;
             current.Type = userActionFields[3].Text;
@@ -324,7 +325,7 @@ namespace Trailbreaker.RecorderApplication
             if (list.SelectedItems.Count > 0)
             {
                 UserAction current = actions[list.SelectedIndices[0]];
-                userActionFields[0].Text = current.Name;
+                userActionFields[0].Text = current.Label;
                 userActionFields[1].Text = current.Page;
                 userActionFields[2].Text = current.Node;
                 userActionFields[3].Text = current.Type;
@@ -338,7 +339,7 @@ namespace Trailbreaker.RecorderApplication
             if (rlist.SelectedItems.Count > 0)
             {
                 UserAction current = ractions[rlist.SelectedIndices[0]];
-                userActionFields[0].Text = current.Name;
+                userActionFields[0].Text = current.Label;
                 userActionFields[1].Text = current.Page;
                 userActionFields[2].Text = current.Node;
                 userActionFields[3].Text = current.Type;
@@ -351,7 +352,7 @@ namespace Trailbreaker.RecorderApplication
         {
             foreach (UserAction action in actions)
             {
-                if (!action.IsNamed)
+                if (!action.IsLabeled)
                 {
                     MessageBox.Show(
                         "You must define a unique name for each action! Unnamed actions are highlighted red.",

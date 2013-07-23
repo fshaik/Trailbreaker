@@ -116,7 +116,9 @@ namespace Trailbreaker.RecorderApplication
             PageObjectNode pageObject = null;
             WebElementNode webElement;
 
+            string label;
             string name;
+            string id;
             string node;
             string type;
             string path;
@@ -142,12 +144,14 @@ namespace Trailbreaker.RecorderApplication
                     {
                         if (reader.Name == PageObjectNode.PageObjectString)
                         {
-                            pageObject = new PageObjectNode(curFolder, reader.GetAttribute("Name"));
+                            pageObject = new PageObjectNode(curFolder, reader.GetAttribute("Label"));
                             curFolder.Children.Add(pageObject);
                         }
                         else if (reader.Name == WebElementNode.WebElementString)
                         {
+                            label = reader.GetAttribute("Label");
                             name = reader.GetAttribute("Name");
+                            id = reader.GetAttribute("Id");
                             node = reader.GetAttribute("Node");
                             type = reader.GetAttribute("Type");
                             path = reader.GetAttribute("Path");
@@ -157,7 +161,7 @@ namespace Trailbreaker.RecorderApplication
                                 Debug.WriteLine("Bad tree XML! A web element was found before a page object! Exiting");
                                 return head;
                             }
-                            webElement = new WebElementNode(pageObject, name, node, type, path, toname);
+                            webElement = new WebElementNode(pageObject, label, name, id, node, type, path, toname);
                             pageObject.Children.Add(webElement);
                         }
                         else
@@ -195,6 +199,56 @@ namespace Trailbreaker.RecorderApplication
             return false;
         }
 
+        private static IEnumerable<string> BuildTest(List<UserAction> actions, string testName)
+        {
+            var lines = new List<string>();
+
+            lines.Add("using System;");
+            lines.Add("using MBRegressionLibrary.Base;");
+            lines.Add("using MBRegressionLibrary.Tests.Tests.BusinessMode;");
+            lines.Add("using MbUnit.Framework;");
+            lines.Add("using " + pageObjectLibraryName + ";");
+            lines.Add("");
+            lines.Add("namespace " + pageObjectTestLibraryName);
+            lines.Add("{");
+            lines.Add("\t[Parallelizable]");
+            lines.Add("\tpublic class " + testName + "Test : AbstractBusinessModeTestSuite");
+            lines.Add("\t{");
+            lines.Add("\t\t[Test]");
+            lines.Add("\t\tpublic void Run" + testName + "Test()");
+            lines.Add("\t\t{");
+            lines.Add(
+                "\t\t\tSession.NavigateTo<" + actions[0].Page +
+                ">(\"https://dev7.mindbodyonline.com/ASP/adm/home.asp?studioid=-40000\");");
+
+            lines.Add("\t\t\tSession.Driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(1));");
+
+            foreach (UserAction action in actions)
+            {
+                if (action.Node.ToLower() == "input" && action.Type.ToLower() == "checkbox")
+                {
+                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
+                                   ".Toggle();");
+                }
+                else if (action.Node.ToLower() == "input" && action.Type.ToLower() != "button")
+                {
+                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
+                                   ".EnterText(\"" + action.Text + "\");");
+                }
+                else
+                {
+                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
+                                   ".Click();");
+                }
+            }
+
+            lines.Add("\t\t}");
+            lines.Add("\t}");
+            lines.Add("}");
+
+            return lines.ToArray();
+        } 
+
         private static void CreateTestRaw(List<UserAction> actions, string testName)
         {
             string path = Exporter.outputPath + "\\Tests\\" + testName + ".cs";
@@ -202,110 +256,38 @@ namespace Trailbreaker.RecorderApplication
             FileStream fileStream = File.Create(path);
             StreamWriter writer = new StreamWriter(fileStream);
 
-            writer.WriteLine("using System;");
-            writer.WriteLine("using MBRegressionLibrary.Base;");
-            writer.WriteLine("using MBRegressionLibrary.Tests.Tests.BusinessMode;");
-            writer.WriteLine("using MbUnit.Framework;");
-            writer.WriteLine("using " + pageObjectLibraryName + ";");
-            writer.WriteLine("");
-            writer.WriteLine("namespace " + pageObjectTestLibraryName);
-            writer.WriteLine("{");
-            writer.WriteLine("\t[Parallelizable]");
-            writer.WriteLine("\tpublic class " + testName + "Test : AbstractBusinessModeTestSuite");
-            writer.WriteLine("\t{");
-            writer.WriteLine("\t\t[Test]");
-            writer.WriteLine("\t\tpublic void Run" + testName + "Test()");
-            writer.WriteLine("\t\t{");
-            writer.WriteLine(
-                "\t\t\tSession.NavigateTo<" + actions[0].Page +
-                ">(\"https://dev7.mindbodyonline.com/ASP/adm/home.asp?studioid=-40000\");");
+            IEnumerable<string> lines = BuildTest(actions, testName);
 
-            foreach (UserAction action in actions)
+            foreach (string s in lines)
             {
-                if (action.Node.ToLower() == "input" && action.Type.ToLower() == "checkbox")
-                {
-                    writer.WriteLine("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Name +
-                                   ".Toggle();");
-                }
-                else if (action.Node.ToLower() == "input" && action.Type.ToLower() != "button")
-                {
-                    writer.WriteLine("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Name +
-                                   ".EnterText(\"" + action.Text + "\");");
-                }
-                else
-                {
-                    writer.WriteLine("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Name +
-                                   ".Click();");
-                }
-
-                writer.WriteLine("\t\t\tSession.Driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(1));");
+                writer.WriteLine(s);
             }
-
-            writer.WriteLine("\t\t}");
-            writer.WriteLine("\t}");
-            writer.WriteLine("}");
 
             writer.Close();
             fileStream.Close();
         }
 
-        private static IProject CreateTest(IProject project, List<UserAction> actions, string classname)
+        private static IProject CreateTest(IProject project, List<UserAction> actions, string testName)
         {
             var builder = new StringBuilder();
 
-            builder.Append("using System;");
-            builder.Append("using MBRegressionLibrary.Base;");
-            builder.Append("using MBRegressionLibrary.Tests.Tests.BusinessMode;");
-            builder.Append("using MbUnit.Framework;");
-            builder.Append("using " + pageObjectLibraryName + ";");
-            builder.Append("");
-            builder.Append("namespace " + pageObjectTestLibraryName);
-            builder.Append("{");
-            builder.Append("\t[Parallelizable]");
-            builder.Append("\tpublic class " + classname + "Test : AbstractBusinessModeTestSuite");
-            builder.Append("\t{");
-            builder.Append("\t\t[Test]");
-            builder.Append("\t\tpublic void Run" + classname + "Test()");
-            builder.Append("\t\t{");
-            builder.Append(
-                "\t\t\tSession.NavigateTo<" + actions[0].Page +
-                ">(\"https://dev7.mindbodyonline.com/ASP/adm/home.asp?studioid=-40000\");");
+            IEnumerable<string> lines = BuildTest(actions, testName);
 
-            foreach (UserAction action in actions)
+            foreach (string s in lines)
             {
-                if (action.Node.ToLower() == "input" && action.Type.ToLower() == "checkbox")
-                {
-                    builder.Append("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Name +
-                                   ".Toggle();");
-                }
-                else if (action.Node.ToLower() == "input" && action.Type.ToLower() != "button")
-                {
-                    builder.Append("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Name +
-                                   ".EnterText(\"" + action.Text + "\");");
-                }
-                else
-                {
-                    builder.Append("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Name +
-                                   ".Click();");
-                }
-
-                builder.Append("\t\t\tSession.Driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(1));");
+                builder.Append(s);
             }
-
-            builder.Append("\t\t}");
-            builder.Append("\t}");
-            builder.Append("}");
 
             IProject cproject = project;
             IDocument doc = null;
-            string newclassname = classname;
+            string newclassname = testName;
 
             if (ProjectContainsDocument(cproject, newclassname))
             {
                 int i = 0;
                 do
                 {
-                    newclassname = classname + i.ToString();
+                    newclassname = testName + i.ToString();
                     i++;
                 } while (ProjectContainsDocument(cproject, newclassname));
             }

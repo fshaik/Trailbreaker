@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Xml;
 
@@ -9,16 +8,21 @@ namespace Trailbreaker.RecorderApplication
     {
         public static string WebElementString = "WebElement";
 
+        public string Label;
         public string Name;
+        public string Id;
         public string Node;
         public string Path;
         public string ToName;
         public string Type;
 
-        public WebElementNode(FolderNode parent, string name, string node, string type, string path, string toname)
+        public WebElementNode(FolderNode parent, string label, string name, string id, string node, string type,
+                              string path, string toname)
             : base(parent, WebElementString)
         {
+            Label = label;
             Name = name;
+            Id = id;
             Node = node;
             Type = type;
             Path = path;
@@ -32,8 +36,10 @@ namespace Trailbreaker.RecorderApplication
 
         public override void WriteToXml(XmlTextWriter writer)
         {
-            writer.WriteStartElement(Label);
+            writer.WriteStartElement(base.Title);
+            writer.WriteAttributeString("Label", Label);
             writer.WriteAttributeString("Name", Name);
+            writer.WriteAttributeString("Id", Id);
             writer.WriteAttributeString("Node", Node);
             writer.WriteAttributeString("Type", Type);
             writer.WriteAttributeString("Path", Path);
@@ -45,69 +51,74 @@ namespace Trailbreaker.RecorderApplication
         {
             if (Path == userAction.Path)
             {
-                userAction.IsNamed = true;
-                userAction.Name = Name;
+                userAction.IsLabeled = true;
+                userAction.Label = Label;
             }
         }
 
-        public void BuildRaw(StreamWriter writer)
+        public IEnumerable<string> Build()
         {
-            writer.WriteLine("");
+            var lines = new List<string>();
+            string webElementClass;
+            string by;
+
+            lines.Add("");
 
             if (Node.ToLower() == "input" && Type.ToLower() == "checkbox")
             {
-                writer.WriteLine("\t\tpublic ICheckbox<" + ToName + "> " + Name);
-                writer.WriteLine("\t\t{");
-                writer.WriteLine("\t\t\tget { return new Checkbox<" + ToName + ">(this, By.XPath(\"" +
-                               Path.Replace("\"", "\\\"") + "\")); }");
+                webElementClass = "CheckBox";
             }
             else if (Node.ToLower() == "input" && Type.ToLower() != "button")
             {
-                writer.WriteLine("\t\tpublic ITextField<" + ToName + "> " + Name);
-                writer.WriteLine("\t\t{");
-                writer.WriteLine("\t\t\tget { return new TextField<" + ToName + ">(this, By.XPath(\"" +
-                               Path.Replace("\"", "\\\"") + "\")); }");
+                webElementClass = "TextField";
             }
             else
             {
-                writer.WriteLine("\t\tpublic IClickable<" + ToName + "> " + Name);
-                writer.WriteLine("\t\t{");
-                writer.WriteLine("\t\t\tget { return new Clickable<" + ToName + ">(this, By.XPath(\"" +
-                               Path.Replace("\"", "\\\"") + "\")); }");
+                webElementClass = "Clickable";
             }
 
-            writer.WriteLine("\t\t}");
-        }
-
-        public StringBuilder Build(StringBuilder builder)
-        {
-            builder.Append("");
-
-            if (Node.ToLower() == "input" && Type.ToLower() == "checkbox")
+            if (Id != "null")
             {
-                builder.Append("\t\tpublic ICheckbox<" + ToName + "> " + Name);
-                builder.Append("\t\t{");
-                builder.Append("\t\t\tget { return new Checkbox<" + ToName + ">(this, By.XPath(\"" +
-                               Path.Replace("\"", "\\\"") + "\")); }");
+                by = "By.Id(\"" + Id + "\")";
             }
-            else if (Node.ToLower() == "input" && Type.ToLower() != "button")
+            else if (Name != "null")
             {
-                builder.Append("\t\tpublic ITextField<" + ToName + "> " + Name);
-                builder.Append("\t\t{");
-                builder.Append("\t\t\tget { return new TextField<" + ToName + ">(this, By.XPath(\"" +
-                               Path.Replace("\"", "\\\"") + "\")); }");
+                by = "By.Name(\"" + Name + "\")";
             }
             else
             {
-                builder.Append("\t\tpublic IClickable<" + ToName + "> " + Name);
-                builder.Append("\t\t{");
-                builder.Append("\t\t\tget { return new Clickable<" + ToName + ">(this, By.XPath(\"" +
-                               Path.Replace("\"", "\\\"") + "\")); }");
+                by = "By.XPath(\"" + Path.Replace("\"", "\\\"") + "\")";
             }
 
-            builder.Append("\t\t}");
+            lines.Add("\t\tpublic I" + webElementClass + "<" + ToName + "> " + Label);
+            lines.Add("\t\t{");
+            lines.Add("\t\t\tget { return new " + webElementClass + "<" + ToName + ">(this, " + by + "); }");
 
-            return builder;
+            lines.Add("\t\t}");
+
+            return lines.ToArray();
         }
+
+//        public void BuildRaw(StreamWriter writer)
+//        {
+//            string[] build = this.Build();
+//
+//            foreach (string s in build)
+//            {
+//                writer.WriteLine(s);
+//            }
+//        }
+//
+//        public StringBuilder Build(StringBuilder builder)
+//        {
+//            string[] build = this.Build();
+//
+//            foreach (string s in build)
+//            {
+//                builder.Append(s);
+//            }
+//
+//            return builder;
+//        }
     }
 }

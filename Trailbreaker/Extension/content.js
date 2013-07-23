@@ -89,7 +89,9 @@ function notifyClick(event) {
     prev_path = path.valueOf();
     
     var payload = {
-        Name: "item" + count,
+        Label: "item" + count,
+        Name: "" + target.getAttribute("name"),
+        Id: "" + target.getAttribute("id"),
         Page: getPageObject2(),
         Node: target.nodeName.valueOf(),
         Type: "" + target.getAttribute("type"),

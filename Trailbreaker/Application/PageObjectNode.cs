@@ -31,7 +31,7 @@ namespace Trailbreaker.RecorderApplication
 
         public override void WriteToXml(XmlTextWriter writer)
         {
-            writer.WriteStartElement(Label);
+            writer.WriteStartElement(Title);
             writer.WriteAttributeString("Name", Name);
             foreach (WebElementNode element in Children)
             {
@@ -57,14 +57,17 @@ namespace Trailbreaker.RecorderApplication
                 {
                     if (element.Path == userAction.Path)
                     {
+                        element.Label = userAction.Label;
                         element.Name = userAction.Name;
+                        element.Id = userAction.Id;
                         element.Node = userAction.Node;
                         element.Type = userAction.Type;
                         element.ToName = userAction.ToPage;
                         return true;
                     }
                 }
-                Children.Add(new WebElementNode(this, userAction.Name, userAction.Node, userAction.Type, userAction.Path,
+                Children.Add(new WebElementNode(this, userAction.Label, userAction.Name, userAction.Id, userAction.Node,
+                                                userAction.Type, userAction.Path,
                                                 userAction.ToPage));
                 return true;
             }
@@ -76,66 +79,126 @@ namespace Trailbreaker.RecorderApplication
             return Name == userAction.Page;
         }
 
+        private IEnumerable<string> Build()
+        {
+            var lines = new List<string>();
+
+            lines.Add("using Bumblebee.Implementation;");
+            lines.Add("using Bumblebee.Interfaces;");
+            lines.Add("using Bumblebee.Setup;");
+            lines.Add("using OpenQA.Selenium;");
+            lines.Add("");
+            lines.Add("namespace " + Exporter.pageObjectLibraryName);
+            lines.Add("{");
+            lines.Add("\tpublic class " + Name + " : Block");
+            lines.Add("\t{");
+            lines.Add("\t\tpublic " + Name + "(Session session)");
+            lines.Add("\t\t\t: base(session)");
+            lines.Add("\t\t{");
+            lines.Add("\t\t}");
+
+            foreach (WebElementNode node in Children)
+            {
+                lines.AddRange(node.Build());
+            }
+
+            lines.Add("\t}");
+            lines.Add("}");
+
+            return lines.ToArray();
+        }
+
         public override void BuildRaw()
         {
             string path = Exporter.outputPath + "\\PageObjects\\" + Name + ".cs";
 
             FileStream fileStream = File.Create(path);
-            StreamWriter writer = new StreamWriter(fileStream);
+            var writer = new StreamWriter(fileStream);
 
-            writer.WriteLine("using Bumblebee.Implementation;");
-            writer.WriteLine("using Bumblebee.Interfaces;");
-            writer.WriteLine("using Bumblebee.Setup;");
-            writer.WriteLine("using OpenQA.Selenium;");
-            writer.WriteLine("");
-            writer.WriteLine("namespace " + Exporter.pageObjectLibraryName);
-            writer.WriteLine("{");
-            writer.WriteLine("\tpublic class " + Name + " : Block");
-            writer.WriteLine("\t{");
-            writer.WriteLine("\t\tpublic " + Name + "(Session session)");
-            writer.WriteLine("\t\t\t: base(session)");
-            writer.WriteLine("\t\t{");
-            writer.WriteLine("\t\t}");
+            IEnumerable<string> build = Build();
 
-            foreach (WebElementNode node in Children)
+            foreach (string s in build)
             {
-                node.BuildRaw(writer);
+                writer.WriteLine(s);
             }
-
-            writer.WriteLine("\t}");
-            writer.WriteLine("}");
 
             writer.Close();
             fileStream.Close();
         }
 
-        public StringBuilder Build()
+        public StringBuilder BuildString()
         {
             var builder = new StringBuilder();
+            IEnumerable<string> build = Build();
 
-            builder.Append("using Bumblebee.Implementation;");
-            builder.Append("using Bumblebee.Interfaces;");
-            builder.Append("using Bumblebee.Setup;");
-            builder.Append("using OpenQA.Selenium;");
-            builder.Append("");
-            builder.Append("namespace " + Exporter.pageObjectLibraryName);
-            builder.Append("{");
-            builder.Append("\tpublic class " + Name + " : Block");
-            builder.Append("\t{");
-            builder.Append("\t\tpublic " + Name + "(Session session)");
-            builder.Append("\t\t\t: base(session)");
-            builder.Append("\t\t{");
-            builder.Append("\t\t}");
-
-            foreach (WebElementNode node in Children)
+            foreach (string s in build)
             {
-                builder = node.Build(builder);
+                builder.Append(s);
             }
-
-            builder.Append("\t}");
-            builder.Append("}");
 
             return builder;
         }
+
+//        public override void BuildOther()
+//        {
+//            string path = Exporter.outputPath + "\\PageObjects\\" + Name + ".cs";
+//
+//            FileStream fileStream = File.Create(path);
+//            StreamWriter writer = new StreamWriter(fileStream);
+//
+//            writer.WriteLine("using Bumblebee.Implementation;");
+//            writer.WriteLine("using Bumblebee.Interfaces;");
+//            writer.WriteLine("using Bumblebee.Setup;");
+//            writer.WriteLine("using OpenQA.Selenium;");
+//            writer.WriteLine("");
+//            writer.WriteLine("namespace " + Exporter.pageObjectLibraryName);
+//            writer.WriteLine("{");
+//            writer.WriteLine("\tpublic class " + Name + " : Block");
+//            writer.WriteLine("\t{");
+//            writer.WriteLine("\t\tpublic " + Name + "(Session session)");
+//            writer.WriteLine("\t\t\t: base(session)");
+//            writer.WriteLine("\t\t{");
+//            writer.WriteLine("\t\t}");
+//
+//            foreach (WebElementNode node in Children)
+//            {
+//                node.BuildRaw(writer);
+//            }
+//
+//            writer.WriteLine("\t}");
+//            writer.WriteLine("}");
+//
+//            writer.Close();
+//            fileStream.Close();
+//        }
+
+//        public StringBuilder Build()
+//        {
+//            var builder = new StringBuilder();
+//
+//            builder.Append("using Bumblebee.Implementation;");
+//            builder.Append("using Bumblebee.Interfaces;");
+//            builder.Append("using Bumblebee.Setup;");
+//            builder.Append("using OpenQA.Selenium;");
+//            builder.Append("");
+//            builder.Append("namespace " + Exporter.pageObjectLibraryName);
+//            builder.Append("{");
+//            builder.Append("\tpublic class " + Name + " : Block");
+//            builder.Append("\t{");
+//            builder.Append("\t\tpublic " + Name + "(Session session)");
+//            builder.Append("\t\t\t: base(session)");
+//            builder.Append("\t\t{");
+//            builder.Append("\t\t}");
+//
+//            foreach (WebElementNode node in Children)
+//            {
+//                builder = node.Build(builder);
+//            }
+//
+//            builder.Append("\t}");
+//            builder.Append("}");
+//
+//            return builder;
+//        }
     }
 }
