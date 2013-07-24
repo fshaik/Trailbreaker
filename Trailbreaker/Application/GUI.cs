@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
-using System.IO;
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
 
@@ -15,8 +14,8 @@ namespace Trailbreaker.RecorderApplication
         private const int GuiSeparator = 25;
         private readonly List<UserAction> actions = new List<UserAction>();
         private readonly MenuItem enterTestName = new MenuItem("Enter Test Name...");
-        private readonly Button exportToVisualStudio = new Button();
         private readonly Button exportToOutputFolder = new Button();
+        private readonly Button exportToVisualStudio = new Button();
         private readonly MenuItem fileMenu = new MenuItem("File");
         private readonly FolderNode head = Exporter.LoadPageObjectTree();
         private readonly ListView list = new ListView();
@@ -30,14 +29,13 @@ namespace Trailbreaker.RecorderApplication
 
         private readonly Label solutionLabel = new Label();
         private readonly Label testNameLabel = new Label();
+        private readonly TreeView tree = new TreeView();
 
-        private readonly string[] userActionData = {"Name", "Detected Page", "Node", "Type", "Path", "Text"};
+        private readonly string[] userActionData = {"Label", "Detected Page", "Node", "Type", "Path", "Text"};
         private readonly List<TextBox> userActionFields = new List<TextBox>();
         private readonly List<Label> userActionLabels = new List<Label>();
         private bool recording;
         private string testName = "MyDescriptiveTestName";
-
-        private TreeView tree = new TreeView();
 
         public GUI()
         {
@@ -106,7 +104,7 @@ namespace Trailbreaker.RecorderApplication
                 var t = new TextBox();
                 t.Location = new Point(GuiMargin*2 + 250 + 100, offset);
                 t.Width = 250;
-                if (data.ToLower() == "name")
+                if (data.ToLower() == "label")
                 {
                     t.LostFocus += UpdateSelectedName;
                 }
@@ -118,14 +116,15 @@ namespace Trailbreaker.RecorderApplication
 
                 offset += GuiSeparator;
             }
+//            userActionFields[0].KeyUp += KeyUpHandler;
 
             exportToVisualStudio.Text = "Export to Visual Studio";
-            exportToVisualStudio.Location = new Point(GuiMargin, GuiMargin * 7 + GuiSeparator * 2 + 300 * 2);
+            exportToVisualStudio.Location = new Point(GuiMargin, GuiMargin*7 + GuiSeparator*2 + 300*2);
             exportToVisualStudio.Width = 150;
             exportToVisualStudio.Click += ExportToVisualStudio;
 
             exportToOutputFolder.Text = "Export to Text Files";
-            exportToOutputFolder.Location = new Point(GuiMargin*2 + 150, GuiMargin * 7 + GuiSeparator * 2 + 300 * 2);
+            exportToOutputFolder.Location = new Point(GuiMargin*2 + 150, GuiMargin*7 + GuiSeparator*2 + 300*2);
             exportToOutputFolder.Width = 150;
             exportToOutputFolder.Click += ExportToOutputFolder;
 
@@ -148,7 +147,7 @@ namespace Trailbreaker.RecorderApplication
                 Controls.Add(t);
             }
 
-            this.FormClosed += EndApplication;
+            FormClosed += EndApplication;
 
             ResumeLayout();
 
@@ -157,6 +156,48 @@ namespace Trailbreaker.RecorderApplication
             Activate();
 
             UpdateBox();
+        }
+
+        private void KeyUpHandler(object o, KeyEventArgs e)
+        {
+            int index;
+            Debug.WriteLine("KeyUp!");
+            if (e.KeyCode == Keys.Enter)
+            {
+                UpdateSelectedName(null, null);
+
+                Debug.WriteLine("ENTERUp!");
+                if (list.SelectedIndices.Count > 0)
+                {
+                    index = list.SelectedIndices[0];
+                    if (index == list.Items.Count - 1)
+                    {
+                        index = 0;
+                    }
+                    else
+                    {
+                        do
+                        {
+                            index++;
+                            list.Items[index].Selected = true;
+                            list.Select();
+                        } while (!actions[index].IsLabeled && !ActionsAreNamed());
+                    }
+                    for (int i = 0; i < list.Items.Count; i++)
+                    {
+                        if (i == index)
+                        {
+                            list.Items[i].Selected = true;
+                        }
+                        else
+                        {
+                            list.Items[i].Selected = false;
+                        }
+                    }
+                    list.Select();
+                    userActionFields[0].Select();
+                }
+            }
         }
 
         private void EndApplication(object o, EventArgs e)
@@ -222,6 +263,8 @@ namespace Trailbreaker.RecorderApplication
         {
             if (recording)
             {
+                exportToVisualStudio.Enabled = true;
+                exportToOutputFolder.Enabled = true;
                 for (int i = 0; i < actions.Count; i++)
                 {
                     if (i > 0)
@@ -253,6 +296,8 @@ namespace Trailbreaker.RecorderApplication
             }
             else
             {
+                exportToVisualStudio.Enabled = false;
+                exportToOutputFolder.Enabled = false;
                 if (actions.Count > 0)
                 {
                     if (MessageBox.Show("Are you sure you would like to record over your previous actions?",
@@ -374,7 +419,6 @@ namespace Trailbreaker.RecorderApplication
 
         private void ExportToOutputFolder(Object sender, EventArgs e)
         {
-
             if (ActionsAreNamed())
             {
                 Exporter.ExportToOutputFolder(actions, head, testName);

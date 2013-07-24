@@ -90,7 +90,7 @@ namespace Trailbreaker.RecorderApplication
             lines.Add("");
             lines.Add("namespace " + Exporter.pageObjectLibraryName);
             lines.Add("{");
-            lines.Add("\tpublic class " + Name + " : Block");
+            lines.Add("\tpublic class " + Name + " : BusinessModePage");
             lines.Add("\t{");
             lines.Add("\t\tpublic " + Name + "(Session session)");
             lines.Add("\t\t\t: base(session)");

@@ -15,6 +15,7 @@ namespace Trailbreaker.RecorderApplication
 
         public static string outputPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrailbreakerOutput");
+
         public static string pageObjectsFolder = "\\PageObjects\\";
         public static string testsFolder = "\\Tests\\";
 
@@ -104,8 +105,10 @@ namespace Trailbreaker.RecorderApplication
                 CreateTestRaw(actions, testName);
             }
 
-            MessageBox.Show(actions.Count + " new page objects " + (actions.Count > 1 ? " and a new test " : "") + "were exported to \"" + outputPath + "\"!",
-                                    "Export to Output Folder", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            MessageBox.Show(
+                actions.Count + " new page objects " + (actions.Count > 1 ? " and a new test " : "") +
+                "were exported to \"" + outputPath + "\"!",
+                "Export to Output Folder", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
         }
 
         public static FolderNode LoadPageObjectTree()
@@ -203,8 +206,10 @@ namespace Trailbreaker.RecorderApplication
         {
             var lines = new List<string>();
 
-            lines.Add("using System;");
+//            lines.Add("using System;");
             lines.Add("using MBRegressionLibrary.Base;");
+            lines.Add("using MBRegressionLibrary.Clients;");
+            lines.Add("using MBRegressionLibrary.Tests.Attributes;");
             lines.Add("using MBRegressionLibrary.Tests.Tests.BusinessMode;");
             lines.Add("using MbUnit.Framework;");
             lines.Add("using " + pageObjectLibraryName + ";");
@@ -212,49 +217,75 @@ namespace Trailbreaker.RecorderApplication
             lines.Add("namespace " + pageObjectTestLibraryName);
             lines.Add("{");
             lines.Add("\t[Parallelizable]");
-            lines.Add("\tpublic class " + testName + "Test : AbstractBusinessModeTestSuite");
+            lines.Add("\t[Site(\"AutobotMaster2\")]");
+            lines.Add("\tinternal class " + testName + "Tests : AbstractBusinessModeTestSuite");
             lines.Add("\t{");
             lines.Add("\t\t[Test]");
             lines.Add("\t\tpublic void Run" + testName + "Test()");
             lines.Add("\t\t{");
-            lines.Add(
-                "\t\t\tSession.NavigateTo<" + actions[0].Page +
-                ">(\"https://dev7.mindbodyonline.com/ASP/adm/home.asp?studioid=-40000\");");
+//            lines.Add(
+//                "\t\t\tSession.NavigateTo<" + actions[0].Page +
+//                ">(\"https://dev7.mindbodyonline.com/ASP/adm/home.asp?studioid=-40000\");");
 
-            lines.Add("\t\t\tSession.Driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(1));");
+            //            lines.Add("\t\t\tSession.Driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(1));");
+            lines.Add("\t\t\tSession.CurrentBlock<BusinessModePage>().GoTo<" + testName + ">()");
 
             foreach (UserAction action in actions)
             {
-                if (action.Node.ToLower() == "input" && action.Type.ToLower() == "checkbox")
+                if (action.Node.ToLower() == "select")
                 {
-                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
-                                   ".Toggle();");
+                    lines.Add("\t\t\t\t." + action.Label + ".Options.ToList()[5].Click()");
                 }
-                else if (action.Node.ToLower() == "input" && action.Type.ToLower() != "button")
+                else if (action.Node.ToLower() == "input" && action.Type.ToLower() == "checkbox")
                 {
-                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
-                                   ".EnterText(\"" + action.Text + "\");");
+                    lines.Add("\t\t\t\t." + action.Label + ".Toggle()");
+                }
+                else if (action.Node.ToLower() == "input" && action.Type.ToLower() != "button" &&
+                         action.Type.ToLower() != "submit")
+                {
+                    lines.Add("\t\t\t\t." + action.Label + ".EnterText(\"" + action.Text + "\")");
                 }
                 else
                 {
-                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
-                                   ".Click();");
+                    lines.Add("\t\t\t\t." + action.Label + ".Click()");
                 }
+//                if (action.Node.ToLower() == "select")
+//                {
+//                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
+//                              ".Options.Single().Click();");
+//                }
+//                else if (action.Node.ToLower() == "input" && action.Type.ToLower() == "checkbox")
+//                {
+//                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
+//                              ".Toggle();");
+//                }
+//                else if (action.Node.ToLower() == "input" && action.Type.ToLower() != "button" &&
+//                         action.Type.ToLower() != "submit")
+//                {
+//                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
+//                              ".EnterText(\"" + action.Text + "\");");
+//                }
+//                else
+//                {
+//                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
+//                              ".Click();");
+//                }
             }
+            lines.Add(";");
 
             lines.Add("\t\t}");
             lines.Add("\t}");
             lines.Add("}");
 
             return lines.ToArray();
-        } 
+        }
 
         private static void CreateTestRaw(List<UserAction> actions, string testName)
         {
-            string path = Exporter.outputPath + "\\Tests\\" + testName + ".cs";
+            string path = outputPath + "\\Tests\\" + testName + ".cs";
 
             FileStream fileStream = File.Create(path);
-            StreamWriter writer = new StreamWriter(fileStream);
+            var writer = new StreamWriter(fileStream);
 
             IEnumerable<string> lines = BuildTest(actions, testName);
 
@@ -293,23 +324,23 @@ namespace Trailbreaker.RecorderApplication
             }
             doc = cproject.AddDocument(newclassname, builder.ToString());
 
-//            foreach (IDocument document in cproject.Documents)
-//            {
-//                Debug.WriteLine("Document " + document.Name + " exists!");
-//                if (document.Name == classname + ".cs")
-//                {
-//                    doc = document.UpdateText(Syntax.ParseCompilationUnit(builder.ToString()).GetText());
-//                    break;
-//                }
-//            }
-//            if (doc == null)
-//            {
-//                Debug.WriteLine("Document " + classname + " doesn't exist!");
-//                doc = cproject.AddDocument(classname, builder.ToString());
-//            }
+            //            foreach (IDocument document in cproject.Documents)
+            //            {
+            //                Debug.WriteLine("Document " + document.Name + " exists!");
+            //                if (document.Name == classname + ".cs")
+            //                {
+            //                    doc = document.UpdateText(Syntax.ParseCompilationUnit(builder.ToString()).GetText());
+            //                    break;
+            //                }
+            //            }
+            //            if (doc == null)
+            //            {
+            //                Debug.WriteLine("Document " + classname + " doesn't exist!");
+            //                doc = cproject.AddDocument(classname, builder.ToString());
+            //            }
 
-//            doc.Organize();
-//            doc.Cleanup();
+            //            doc.Organize();
+            //            doc.Cleanup();
             cproject = doc.Project;
 
             return cproject;

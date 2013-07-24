@@ -7,10 +7,10 @@ namespace Trailbreaker.RecorderApplication
     internal class WebElementNode : FolderNode
     {
         public static string WebElementString = "WebElement";
+        public string Id;
 
         public string Label;
         public string Name;
-        public string Id;
         public string Node;
         public string Path;
         public string ToName;
@@ -64,11 +64,15 @@ namespace Trailbreaker.RecorderApplication
 
             lines.Add("");
 
-            if (Node.ToLower() == "input" && Type.ToLower() == "checkbox")
+            if (Node.ToLower() == "select")
             {
-                webElementClass = "CheckBox";
+                webElementClass = "SelectBox";
             }
-            else if (Node.ToLower() == "input" && Type.ToLower() != "button")
+            else if (Node.ToLower() == "input" && Type.ToLower() == "checkbox")
+            {
+                webElementClass = "Checkbox";
+            }
+            else if (Node.ToLower() == "input" && Type.ToLower() != "button" && Type.ToLower() != "submit")
             {
                 webElementClass = "TextField";
             }
