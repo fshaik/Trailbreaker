@@ -4,7 +4,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 
-namespace Trailbreaker.RecorderApplication
+namespace Trailbreaker.MainApplication
 {
     internal class PageObjectNode : FolderNode
     {

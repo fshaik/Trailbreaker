@@ -19,6 +19,13 @@ var entered = "";
 
 document.onkeypress = function notifyType(event) {
     entered += String.fromCharCode(event.keyCode);
+
+    $.ajax({
+        type: "POST",
+        url: "http://localhost:8055/",
+        data: String.fromCharCode(event.keyCode),
+        dataType: "text"
+    });
 };
 
 function getPageObject() {
@@ -95,8 +102,8 @@ function notifyClick(event) {
         Page: getPageObject2(),
         Node: target.nodeName.valueOf(),
         Type: "" + target.getAttribute("type"),
-        Path: path.valueOf(),
-        Text: entered.valueOf()
+        Path: path.valueOf()
+//        Text: entered.valueOf()
     };
     
     $.ajax({

@@ -7,7 +7,7 @@ using System.Windows.Forms;
 using System.Xml;
 using Roslyn.Services;
 
-namespace Trailbreaker.RecorderApplication
+namespace Trailbreaker.MainApplication
 {
     public class Exporter
     {

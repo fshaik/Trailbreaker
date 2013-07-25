@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Windows.Forms;
 using Roslyn.Services;
 
-namespace Trailbreaker.RecorderApplication
+namespace Trailbreaker.MainApplication
 {
     internal class Start
     {
@@ -18,7 +18,7 @@ namespace Trailbreaker.RecorderApplication
                 Directory.CreateDirectory(Exporter.outputPath);
             }
 
-            FindSolution();
+//            FindSolution();
 
             var gui = new GUI();
             Application.Run(gui);

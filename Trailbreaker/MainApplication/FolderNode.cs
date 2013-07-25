@@ -5,7 +5,7 @@ using System.Xml;
 using Roslyn.Compilers.CSharp;
 using Roslyn.Services;
 
-namespace Trailbreaker.RecorderApplication
+namespace Trailbreaker.MainApplication
 {
     public class FolderNode
     {

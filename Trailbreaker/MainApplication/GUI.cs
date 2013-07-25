@@ -6,9 +6,9 @@ using System.Drawing;
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
 
-namespace Trailbreaker.RecorderApplication
+namespace Trailbreaker.MainApplication
 {
-    internal class GUI : Form
+    internal class GUI : TrailbreakerReceiverForm
     {
         private const int GuiMargin = 10;
         private const int GuiSeparator = 25;
@@ -34,6 +34,7 @@ namespace Trailbreaker.RecorderApplication
         private readonly string[] userActionData = {"Label", "Detected Page", "Node", "Type", "Path", "Text"};
         private readonly List<TextBox> userActionFields = new List<TextBox>();
         private readonly List<Label> userActionLabels = new List<Label>();
+        private UserAction recentAction;
         private bool recording;
         private string testName = "MyDescriptiveTestName";
 
@@ -63,7 +64,7 @@ namespace Trailbreaker.RecorderApplication
             selectSolution.Click += SelectSolution;
             enterTestName.Click += EnterTestName;
             fileMenu.MenuItems.Add(newTest);
-            fileMenu.MenuItems.Add(selectSolution);
+//            fileMenu.MenuItems.Add(selectSolution);
             fileMenu.MenuItems.Add(enterTestName);
             menu.MenuItems.Add(fileMenu);
             Menu = menu;
@@ -103,7 +104,7 @@ namespace Trailbreaker.RecorderApplication
 
                 var t = new TextBox();
                 t.Location = new Point(GuiMargin*2 + 250 + 100, offset);
-                t.Width = 250;
+                t.Width = 350;
                 if (data.ToLower() == "label")
                 {
                     t.LostFocus += UpdateSelectedName;
@@ -133,10 +134,10 @@ namespace Trailbreaker.RecorderApplication
             Controls.Add(list);
             Controls.Add(record);
             Controls.Add(rlist);
-            Controls.Add(exportToVisualStudio);
+//            Controls.Add(exportToVisualStudio);
             Controls.Add(exportToOutputFolder);
 
-            Controls.Add(tree);
+//            Controls.Add(tree);
 
             foreach (Label l in userActionLabels)
             {
@@ -245,8 +246,9 @@ namespace Trailbreaker.RecorderApplication
             new Receiver(this, 8055);
         }
 
-        public void AddAction(UserAction userAction)
+        public override void AddAction(UserAction userAction)
         {
+            recentAction = userAction;
             userAction.Print();
             if (recording)
             {
@@ -259,6 +261,11 @@ namespace Trailbreaker.RecorderApplication
             UpdateBox();
         }
 
+        public override void AddCharacter(char c)
+        {
+            recentAction.Text += c;
+        }
+
         private void Record(object sender, EventArgs eventArgs)
         {
             if (recording)
@@ -269,17 +276,17 @@ namespace Trailbreaker.RecorderApplication
                 {
                     if (i > 0)
                     {
-                        if (actions[i].Text != "")
-                        {
-                            actions[i - 1].Text = actions[i].Text;
-                            actions[i].Text = "";
-                        }
+//                        if (actions[i].Text != "")
+//                        {
+//                            actions[i - 1].Text = actions[i].Text;
+//                            actions[i].Text = "";
+//                        }
                         actions[i - 1].ToPage = actions[i].Page;
                         actions[i].ToPage = actions[i].Page;
                     }
 
                     UserAction action = actions[i];
-                    head.UpdateAction(ref action);
+//                    head.UpdateAction(ref action);
                     actions[i] = action;
 
                     if (!actions[i].IsLabeled)

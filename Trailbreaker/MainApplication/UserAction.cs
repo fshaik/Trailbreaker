@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.Serialization;
 
-namespace Trailbreaker.RecorderApplication
+namespace Trailbreaker.MainApplication
 {
     [DataContract]
     public class UserAction
@@ -30,8 +30,8 @@ namespace Trailbreaker.RecorderApplication
         [DataMember(Name = "Path", IsRequired = true)]
         public string Path { get; set; }
 
-        [DataMember(Name = "Text", IsRequired = true)]
-        public string Text { get; set; }
+//        [DataMember(Name = "Text", IsRequired = true)]
+        public string Text = "";
 
         public override string ToString()
         {

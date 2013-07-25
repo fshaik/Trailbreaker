@@ -2,7 +2,7 @@
 using System.Windows.Forms;
 using System.Xml;
 
-namespace Trailbreaker.RecorderApplication
+namespace Trailbreaker.MainApplication
 {
     internal class WebElementNode : FolderNode
     {
