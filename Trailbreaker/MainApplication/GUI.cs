@@ -21,9 +21,11 @@ namespace Trailbreaker.MainApplication
         private readonly ListView list = new ListView();
 
         private readonly MainMenu menu = new MainMenu();
+        private readonly Label metaLabel = new Label();
         private readonly MenuItem newTest = new MenuItem("New Test...");
         private readonly List<UserAction> ractions = new List<UserAction>();
         private readonly Button record = new Button();
+        private readonly Button remove = new Button();
         private readonly ListView rlist = new ListView();
         private readonly MenuItem selectSolution = new MenuItem("Use Another Solution...");
 
@@ -31,7 +33,7 @@ namespace Trailbreaker.MainApplication
         private readonly Label testNameLabel = new Label();
         private readonly TreeView tree = new TreeView();
 
-        private readonly string[] userActionData = {"Label", "Detected Page", "Node", "Type", "Path", "Text"};
+        private readonly string[] userActionData = {"Label", "Entered Text"};
         private readonly List<TextBox> userActionFields = new List<TextBox>();
         private readonly List<Label> userActionLabels = new List<Label>();
         private UserAction recentAction;
@@ -57,8 +59,9 @@ namespace Trailbreaker.MainApplication
 
             SuspendLayout();
 
-            ClientSize = new Size(800, 750);
             Text = "Trailbreaker";
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            ClientSize = new Size(800, 730);
 
             newTest.Click += NewTest;
             selectSolution.Click += SelectSolution;
@@ -73,25 +76,40 @@ namespace Trailbreaker.MainApplication
             solutionLabel.Width = 800;
             solutionLabel.Location = new Point(GuiMargin, GuiMargin);
 
-//            testNameLabel.Text = "Creating Test: " + testName;
-            testNameLabel.Width = 800;
-            testNameLabel.Location = new Point(GuiMargin, GuiMargin + GuiSeparator);
+            testNameLabel.Text = "Creating Test: " + testName;
+            testNameLabel.Width = 300;
+            testNameLabel.Location = new Point(GuiMargin, GuiMargin);
 
-            list.Location = new Point(GuiMargin, GuiMargin*4 + GuiSeparator);
-            list.Size = new Size(250, 300);
+            metaLabel.Text = "Useful Element Metadata: (Setting a nice, valid label is a good idea!)";
+            metaLabel.Width = 400;
+            metaLabel.Location = new Point(GuiMargin*2 + 400, GuiMargin*2 + GuiSeparator);
+
+            list.Location = new Point(GuiMargin, GuiMargin*2 + GuiSeparator);
+            list.Size = new Size(400, 300);
             list.MultiSelect = false;
-            list.View = View.List;
+            list.Columns.Add("Recorded Clicked Elements", 390);
+            //            list.Scrollable = true;
+            list.View = View.Details;
+            //            list.HeaderStyle = ColumnHeaderStyle.None;
             list.SelectedIndexChanged += ListSelect;
+
+            remove.Text = "Remove Selected";
+            remove.Width = 200;
+            remove.Location = new Point(GuiMargin*2 + 400, GuiMargin + 300);
+            remove.Click += Remove;
 
             record.Text = "Start Recording";
             record.Width = 100;
-            record.Location = new Point(GuiMargin, GuiMargin*5 + GuiSeparator + 300);
+            record.Location = new Point(GuiMargin, GuiMargin*3 + GuiSeparator + 300);
             record.Click += Record;
 
-            rlist.Location = new Point(GuiMargin, GuiMargin*6 + GuiSeparator*2 + 300);
+            rlist.Location = new Point(GuiMargin, GuiMargin*4 + GuiSeparator*2 + 300);
             rlist.Size = new Size(400, 300);
             rlist.MultiSelect = false;
-            rlist.View = View.List;
+            rlist.Columns.Add("Other Clicked Elements", 390);
+//            rlist.Scrollable = true;
+            rlist.View = View.Details;
+//            rlist.HeaderStyle = ColumnHeaderStyle.None;
             rlist.SelectedIndexChanged += RListSelect;
 
             int offset = GuiMargin*5 + GuiSeparator;
@@ -99,12 +117,12 @@ namespace Trailbreaker.MainApplication
             {
                 var l = new Label();
                 l.Text = data + ": ";
-                l.Location = new Point(GuiMargin*2 + 250, offset + 3);
+                l.Location = new Point(GuiMargin*2 + 400, offset + 3);
                 userActionLabels.Add(l);
 
                 var t = new TextBox();
-                t.Location = new Point(GuiMargin*2 + 250 + 100, offset);
-                t.Width = 350;
+                t.Location = new Point(GuiMargin*2 + 400 + 100, offset);
+                t.Width = 200;
                 if (data.ToLower() == "label")
                 {
                     t.LostFocus += UpdateSelectedName;
@@ -119,23 +137,25 @@ namespace Trailbreaker.MainApplication
             }
 //            userActionFields[0].KeyUp += KeyUpHandler;
 
-            exportToVisualStudio.Text = "Export to Visual Studio";
-            exportToVisualStudio.Location = new Point(GuiMargin, GuiMargin*7 + GuiSeparator*2 + 300*2);
-            exportToVisualStudio.Width = 150;
-            exportToVisualStudio.Click += ExportToVisualStudio;
-
             exportToOutputFolder.Text = "Export to Text Files";
-            exportToOutputFolder.Location = new Point(GuiMargin*2 + 150, GuiMargin*7 + GuiSeparator*2 + 300*2);
+            exportToOutputFolder.Location = new Point(GuiMargin, GuiMargin*5 + GuiSeparator*2 + 300*2);
             exportToOutputFolder.Width = 150;
             exportToOutputFolder.Click += ExportToOutputFolder;
 
-            Controls.Add(solutionLabel);
+            exportToVisualStudio.Text = "Export to Visual Studio";
+            exportToVisualStudio.Location = new Point(GuiMargin*2 + 150, GuiMargin*7 + GuiSeparator*2 + 300*2);
+            exportToVisualStudio.Width = 150;
+            exportToVisualStudio.Click += ExportToVisualStudio;
+
+            //            Controls.Add(solutionLabel);
             Controls.Add(testNameLabel);
+            Controls.Add(metaLabel);
             Controls.Add(list);
+            Controls.Add(remove);
             Controls.Add(record);
             Controls.Add(rlist);
-//            Controls.Add(exportToVisualStudio);
             Controls.Add(exportToOutputFolder);
+//            Controls.Add(exportToVisualStudio);
 
 //            Controls.Add(tree);
 
@@ -156,7 +176,16 @@ namespace Trailbreaker.MainApplication
 
             Activate();
 
-            UpdateBox();
+            UpdateListView();
+        }
+
+        private void Remove(object o, EventArgs e)
+        {
+            if (list.SelectedIndices.Count > 0)
+            {
+                actions.RemoveAt(list.SelectedIndices[0]);
+                UpdateListView();
+            }
         }
 
         private void KeyUpHandler(object o, KeyEventArgs e)
@@ -231,7 +260,7 @@ namespace Trailbreaker.MainApplication
         {
             actions.Clear();
             ractions.Clear();
-            UpdateBox();
+            UpdateListView();
 
             foreach (TextBox t in userActionFields)
             {
@@ -246,19 +275,35 @@ namespace Trailbreaker.MainApplication
             new Receiver(this, 8055);
         }
 
+        private bool ActionExists(UserAction action)
+        {
+            foreach (UserAction userAction in actions)
+            {
+                if (userAction.Path == action.Path)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public override void AddAction(UserAction userAction)
         {
+            userAction.Label = userAction.GetBestLabel();
             recentAction = userAction;
             userAction.Print();
             if (recording)
             {
-                actions.Add(userAction);
+                if (!ActionExists(userAction))
+                {
+                    actions.Add(userAction);
+                }
             }
             else
             {
                 ractions.Insert(0, userAction);
             }
-            UpdateBox();
+            UpdateListView();
         }
 
         public override void AddCharacter(char c)
@@ -312,7 +357,7 @@ namespace Trailbreaker.MainApplication
                                         MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     {
                         actions.Clear();
-                        UpdateBox();
+                        UpdateListView();
                     }
                     else
                     {
@@ -340,25 +385,25 @@ namespace Trailbreaker.MainApplication
                 }
             }
             current.Label = userActionFields[0].Text;
-            current.Page = userActionFields[1].Text;
-            current.Node = userActionFields[2].Text;
-            current.Type = userActionFields[3].Text;
-            current.Path = userActionFields[4].Text;
-            current.Text = userActionFields[5].Text;
+//            current.Page = userActionFields[1].Text;
+//            current.Node = userActionFields[2].Text;
+//            current.Type = userActionFields[3].Text;
+//            current.Path = userActionFields[4].Text;
+            current.Text = userActionFields[1].Text;
         }
 
         private void UpdateSelected(Object sender, EventArgs e)
         {
             UserAction current = actions[list.SelectedIndices[0]];
             current.Label = userActionFields[0].Text;
-            current.Page = userActionFields[1].Text;
-            current.Node = userActionFields[2].Text;
-            current.Type = userActionFields[3].Text;
-            current.Path = userActionFields[4].Text;
-            current.Text = userActionFields[5].Text;
+//            current.Page = userActionFields[1].Text;
+//            current.Node = userActionFields[2].Text;
+//            current.Type = userActionFields[3].Text;
+//            current.Path = userActionFields[4].Text;
+            current.Text = userActionFields[1].Text;
         }
 
-        private void UpdateBox()
+        private void UpdateListView()
         {
             list.Items.Clear();
             foreach (UserAction act in actions)
@@ -378,11 +423,11 @@ namespace Trailbreaker.MainApplication
             {
                 UserAction current = actions[list.SelectedIndices[0]];
                 userActionFields[0].Text = current.Label;
-                userActionFields[1].Text = current.Page;
-                userActionFields[2].Text = current.Node;
-                userActionFields[3].Text = current.Type;
-                userActionFields[4].Text = current.Path;
-                userActionFields[5].Text = current.Text;
+//                userActionFields[1].Text = current.Page;
+//                userActionFields[2].Text = current.Node;
+//                userActionFields[3].Text = current.Type;
+//                userActionFields[4].Text = current.Path;
+                userActionFields[1].Text = current.Text;
             }
         }
 
@@ -392,11 +437,11 @@ namespace Trailbreaker.MainApplication
             {
                 UserAction current = ractions[rlist.SelectedIndices[0]];
                 userActionFields[0].Text = current.Label;
-                userActionFields[1].Text = current.Page;
-                userActionFields[2].Text = current.Node;
-                userActionFields[3].Text = current.Type;
-                userActionFields[4].Text = current.Path;
-                userActionFields[5].Text = current.Text;
+//                userActionFields[1].Text = current.Page;
+//                userActionFields[2].Text = current.Node;
+//                userActionFields[3].Text = current.Type;
+//                userActionFields[4].Text = current.Path;
+                userActionFields[1].Text = current.Text;
             }
         }
 
@@ -407,7 +452,7 @@ namespace Trailbreaker.MainApplication
                 if (!action.IsLabeled)
                 {
                     MessageBox.Show(
-                        "You must define a unique name for each action! Unnamed actions are highlighted red.",
+                        "You must define a unique label for each action! Unnamed actions are highlighted red.",
                         "Incomplete Naming Scheme",
                         MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return false;

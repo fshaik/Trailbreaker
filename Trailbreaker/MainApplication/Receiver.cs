@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading;
@@ -98,9 +99,19 @@ namespace Trailbreaker.MainApplication
                         json = false;
                         var jsonSerializer = new DataContractJsonSerializer(typeof(UserAction));
                         var stream = new MemoryStream(Encoding.UTF8.GetBytes(jstring));
-                        var act = jsonSerializer.ReadObject(stream) as UserAction;
-                        stream.Close();
-                        gui.Invoke(new MethodInvoker(() => gui.AddAction(act)));
+                        try
+                        {
+                            var act = jsonSerializer.ReadObject(stream) as UserAction;
+                            stream.Close();
+                            gui.Invoke(new MethodInvoker(() => gui.AddAction(act)));
+                        }
+                        catch (SerializationException e)
+                        {
+                            MessageBox.Show(
+                                "You need to reload your Trailbreaker Extension AND/OR refresh the current page in Chrome in order to record elements!",
+                                "Serialization Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            Debug.WriteLine(e.Message);
+                        }
                     }
                     open--;
                 }

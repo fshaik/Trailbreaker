@@ -18,6 +18,9 @@ namespace Trailbreaker.MainApplication
         [DataMember(Name = "Id", IsRequired = true)]
         public string Id { get; set; }
 
+        [DataMember(Name = "ClassName", IsRequired = true)]
+        public string ClassName { get; set; }
+
         [DataMember(Name = "Page", IsRequired = true)]
         public string Page { get; set; }
 
@@ -33,9 +36,46 @@ namespace Trailbreaker.MainApplication
 //        [DataMember(Name = "Text", IsRequired = true)]
         public string Text = "";
 
+        public string GetBestLabel()
+        {
+            if (Id != "null")
+            {
+                return Id;
+            }
+            else if (Name != "null")
+            {
+                return Name;
+            }
+            else if (ClassName != "null")
+            {
+                return ClassName;
+            }
+            else
+            {
+                return Path;
+            }
+        }
+
         public override string ToString()
         {
-            return Path;
+            string by;
+            if (Id != "null")
+            {
+                by = "By.Id(\"" + Id + "\")";
+            }
+            else if (Name != "null")
+            {
+                by = "By.Name(\"" + Name + "\")";
+            }
+            else if (ClassName != "null")
+            {
+                by = "By.ClassName(\"" + ClassName + "\")";
+            }
+            else
+            {
+                by = "By.XPath(\"" + Path.Replace("\"", "\\\"") + "\")";
+            }
+            return by;
         }
 
         public void Print()
@@ -43,6 +83,7 @@ namespace Trailbreaker.MainApplication
             Debug.WriteLine("Label: " + Label);
             Debug.WriteLine("Name: " + Name);
             Debug.WriteLine("Id: " + Id);
+            Debug.WriteLine("ClassName: " + ClassName);
             Debug.WriteLine("Page: " + Page);
             Debug.WriteLine("Node: " + Node);
             Debug.WriteLine("Type: " + Type);

@@ -60,13 +60,14 @@ namespace Trailbreaker.MainApplication
                         element.Label = userAction.Label;
                         element.Name = userAction.Name;
                         element.Id = userAction.Id;
+                        element.ClassName = userAction.ClassName;
                         element.Node = userAction.Node;
                         element.Type = userAction.Type;
                         element.ToName = userAction.ToPage;
                         return true;
                     }
                 }
-                Children.Add(new WebElementNode(this, userAction.Label, userAction.Name, userAction.Id, userAction.Node,
+                Children.Add(new WebElementNode(this, userAction.Label, userAction.Name, userAction.Id, userAction.ClassName, userAction.Node,
                                                 userAction.Type, userAction.Path,
                                                 userAction.ToPage));
                 return true;

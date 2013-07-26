@@ -7,22 +7,24 @@ namespace Trailbreaker.MainApplication
     internal class WebElementNode : FolderNode
     {
         public static string WebElementString = "WebElement";
-        public string Id;
 
         public string Label;
         public string Name;
+        public string Id;
+        public string ClassName;
         public string Node;
         public string Path;
         public string ToName;
         public string Type;
 
-        public WebElementNode(FolderNode parent, string label, string name, string id, string node, string type,
+        public WebElementNode(FolderNode parent, string label, string name, string id, string cclass, string node, string type,
                               string path, string toname)
             : base(parent, WebElementString)
         {
             Label = label;
             Name = name;
             Id = id;
+            ClassName = cclass;
             Node = node;
             Type = type;
             Path = path;
@@ -40,6 +42,7 @@ namespace Trailbreaker.MainApplication
             writer.WriteAttributeString("Label", Label);
             writer.WriteAttributeString("Name", Name);
             writer.WriteAttributeString("Id", Id);
+            writer.WriteAttributeString("ClassName", ClassName);
             writer.WriteAttributeString("Node", Node);
             writer.WriteAttributeString("Type", Type);
             writer.WriteAttributeString("Path", Path);
@@ -88,6 +91,10 @@ namespace Trailbreaker.MainApplication
             else if (Name != "null")
             {
                 by = "By.Name(\"" + Name + "\")";
+            }
+            else if (ClassName != "null")
+            {
+                by = "By.ClassName(\"" + ClassName + "\")";
             }
             else
             {

@@ -99,6 +99,7 @@ function notifyClick(event) {
         Label: "item" + count,
         Name: "" + target.getAttribute("name"),
         Id: "" + target.getAttribute("id"),
+        ClassName: "" + target.getAttribute("class"),
         Page: getPageObject2(),
         Node: target.nodeName.valueOf(),
         Type: "" + target.getAttribute("type"),

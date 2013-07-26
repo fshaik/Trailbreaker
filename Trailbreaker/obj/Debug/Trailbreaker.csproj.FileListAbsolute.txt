@@ -30,4 +30,3 @@ H:\Trailbreaker\Trailbreaker\bin\Debug\System.Net.Http.Formatting.xml
 H:\Trailbreaker\Trailbreaker\bin\Debug\Gallio.XmlSerializers.dll
 H:\Trailbreaker\Trailbreaker\obj\Debug\Trailbreaker.exe
 H:\Trailbreaker\Trailbreaker\obj\Debug\Trailbreaker.pdb
-H:\Trailbreaker\Trailbreaker\obj\Debug\Trailbreaker.csprojResolveAssemblyReference.cache

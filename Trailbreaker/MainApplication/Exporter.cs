@@ -122,6 +122,7 @@ namespace Trailbreaker.MainApplication
             string label;
             string name;
             string id;
+            string cclass;
             string node;
             string type;
             string path;
@@ -155,6 +156,7 @@ namespace Trailbreaker.MainApplication
                             label = reader.GetAttribute("Label");
                             name = reader.GetAttribute("Name");
                             id = reader.GetAttribute("Id");
+                            cclass = reader.GetAttribute("Class");
                             node = reader.GetAttribute("Node");
                             type = reader.GetAttribute("Type");
                             path = reader.GetAttribute("Path");
@@ -164,7 +166,7 @@ namespace Trailbreaker.MainApplication
                                 Debug.WriteLine("Bad tree XML! A web element was found before a page object! Exiting");
                                 return head;
                             }
-                            webElement = new WebElementNode(pageObject, label, name, id, node, type, path, toname);
+                            webElement = new WebElementNode(pageObject, label, name, id, cclass, node, type, path, toname);
                             pageObject.Children.Add(webElement);
                         }
                         else
