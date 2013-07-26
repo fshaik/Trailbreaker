@@ -84,7 +84,7 @@ namespace Trailbreaker.MainApplication
             }
         }
 
-        public static void ExportToOutputFolder(List<UserAction> actions, FolderNode head, string testName)
+        public static void ExportToOutputFolder(List<UserAction> actions, FolderNode head, string testName, bool openFiles)
         {
             UpdateTreeWithActions(actions, head);
             WriteTreeToXML(head);
@@ -99,10 +99,10 @@ namespace Trailbreaker.MainApplication
                 Directory.CreateDirectory(outputPath + testsFolder);
             }
 
-            head.BuildRaw();
+            head.BuildRaw(openFiles);
             if (actions.Count > 1)
             {
-                CreateTestRaw(actions, testName);
+                CreateTestRaw(actions, testName, openFiles);
             }
 
             MessageBox.Show(
@@ -148,7 +148,7 @@ namespace Trailbreaker.MainApplication
                     {
                         if (reader.Name == PageObjectNode.PageObjectString)
                         {
-                            pageObject = new PageObjectNode(curFolder, reader.GetAttribute("Label"));
+                            pageObject = new PageObjectNode(curFolder, reader.GetAttribute("Name"));
                             curFolder.Children.Add(pageObject);
                         }
                         else if (reader.Name == WebElementNode.WebElementString)
@@ -223,7 +223,7 @@ namespace Trailbreaker.MainApplication
             lines.Add("\tinternal class " + testName + "Tests : AbstractBusinessModeTestSuite");
             lines.Add("\t{");
             lines.Add("\t\t[Test]");
-            lines.Add("\t\tpublic void Run" + testName + "Test()");
+            lines.Add("\t\tpublic void RunSimple" + testName + "Test()");
             lines.Add("\t\t{");
 //            lines.Add(
 //                "\t\t\tSession.NavigateTo<" + actions[0].Page +
@@ -282,9 +282,9 @@ namespace Trailbreaker.MainApplication
             return lines.ToArray();
         }
 
-        private static void CreateTestRaw(List<UserAction> actions, string testName)
+        private static void CreateTestRaw(List<UserAction> actions, string testName, bool openFiles)
         {
-            string path = outputPath + "\\Tests\\" + testName + ".cs";
+            string path = outputPath + "\\Tests\\" + testName + "Tests.cs";
 
             FileStream fileStream = File.Create(path);
             var writer = new StreamWriter(fileStream);
@@ -298,6 +298,17 @@ namespace Trailbreaker.MainApplication
 
             writer.Close();
             fileStream.Close();
+
+            if (openFiles)
+            {
+                ProcessStartInfo pi = new ProcessStartInfo(path);
+                pi.Arguments = Path.GetFileName(path);
+                pi.UseShellExecute = true;
+                pi.WorkingDirectory = Path.GetDirectoryName(path);
+                pi.FileName = "C:\\Windows\\notepad.exe";
+                pi.Verb = "OPEN";
+                Process.Start(pi);
+            }
         }
 
         private static IProject CreateTest(IProject project, List<UserAction> actions, string testName)

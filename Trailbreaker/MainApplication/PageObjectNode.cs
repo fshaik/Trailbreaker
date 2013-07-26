@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
@@ -109,8 +110,13 @@ namespace Trailbreaker.MainApplication
             return lines.ToArray();
         }
 
-        public override void BuildRaw()
+        public override void BuildRaw(bool openFiles)
         {
+            if (Name == null)
+            {
+                return;
+            }
+
             string path = Exporter.outputPath + "\\PageObjects\\" + Name + ".cs";
 
             FileStream fileStream = File.Create(path);
@@ -125,6 +131,19 @@ namespace Trailbreaker.MainApplication
 
             writer.Close();
             fileStream.Close();
+
+            Debug.WriteLine("RAN!");
+
+            if (openFiles && GUI.testName == Name)
+            {
+                ProcessStartInfo pi = new ProcessStartInfo(path);
+                pi.Arguments = Path.GetFileName(path);
+                pi.UseShellExecute = true;
+                pi.WorkingDirectory = Path.GetDirectoryName(path);
+                pi.FileName = "C:\\Windows\\notepad.exe";
+                pi.Verb = "OPEN";
+                Process.Start(pi);
+            }
         }
 
         public StringBuilder BuildString()

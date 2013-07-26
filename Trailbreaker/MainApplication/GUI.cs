@@ -14,8 +14,9 @@ namespace Trailbreaker.MainApplication
         private const int GuiSeparator = 25;
         private readonly List<UserAction> actions = new List<UserAction>();
         private readonly MenuItem enterTestName = new MenuItem("Enter Test Name...");
+        private readonly CheckBox openFiles = new CheckBox();
         private readonly Button exportToOutputFolder = new Button();
-        private readonly Button exportToVisualStudio = new Button();
+//        private readonly Button exportToVisualStudio = new Button();
         private readonly MenuItem fileMenu = new MenuItem("File");
         private readonly FolderNode head = Exporter.LoadPageObjectTree();
         private readonly ListView list = new ListView();
@@ -27,28 +28,21 @@ namespace Trailbreaker.MainApplication
         private readonly Button record = new Button();
         private readonly Button remove = new Button();
         private readonly ListView rlist = new ListView();
-        private readonly MenuItem selectSolution = new MenuItem("Use Another Solution...");
+//        private readonly MenuItem selectSolution = new MenuItem("Use Another Solution...");
 
-        private readonly Label solutionLabel = new Label();
+//        private readonly Label solutionLabel = new Label();
         private readonly Label testNameLabel = new Label();
-        private readonly TreeView tree = new TreeView();
+//        private readonly TreeView tree = new TreeView();
 
         private readonly string[] userActionData = {"Label", "Entered Text"};
         private readonly List<TextBox> userActionFields = new List<TextBox>();
         private readonly List<Label> userActionLabels = new List<Label>();
         private UserAction recentAction;
         private bool recording;
-        private string testName = "MyDescriptiveTestName";
+        public static string testName = "MyDescriptiveTestName";
 
         public GUI()
         {
-            tree.Location = new Point(450, 300);
-            tree.Size = new Size(300, 400);
-            tree.Text = "Page Object Tree";
-            tree.Scrollable = true;
-            tree.Nodes.Add(head.GetTreeNode());
-            tree.Nodes[0].Expand();
-
             EnterTestName(null, null);
 
             var worker = new BackgroundWorker();
@@ -64,7 +58,7 @@ namespace Trailbreaker.MainApplication
             ClientSize = new Size(800, 730);
 
             newTest.Click += NewTest;
-            selectSolution.Click += SelectSolution;
+//            selectSolution.Click += SelectSolution;
             enterTestName.Click += EnterTestName;
             fileMenu.MenuItems.Add(newTest);
 //            fileMenu.MenuItems.Add(selectSolution);
@@ -72,9 +66,9 @@ namespace Trailbreaker.MainApplication
             menu.MenuItems.Add(fileMenu);
             Menu = menu;
 
-            solutionLabel.Text = "Using Solution: " + Exporter.solutionPath;
-            solutionLabel.Width = 800;
-            solutionLabel.Location = new Point(GuiMargin, GuiMargin);
+//            solutionLabel.Text = "Using Solution: " + Exporter.solutionPath;
+//            solutionLabel.Width = 800;
+//            solutionLabel.Location = new Point(GuiMargin, GuiMargin);
 
             testNameLabel.Text = "Creating Test: " + testName;
             testNameLabel.Width = 300;
@@ -137,15 +131,20 @@ namespace Trailbreaker.MainApplication
             }
 //            userActionFields[0].KeyUp += KeyUpHandler;
 
+            openFiles.Text = "Open Files After Export";
+            openFiles.Location = new Point(GuiMargin, GuiMargin * 5 + GuiSeparator * 2 + 300 * 2);
+            openFiles.Width = 150;
+            openFiles.Checked = true;
+
             exportToOutputFolder.Text = "Export to Text Files";
-            exportToOutputFolder.Location = new Point(GuiMargin, GuiMargin*5 + GuiSeparator*2 + 300*2);
+            exportToOutputFolder.Location = new Point(GuiMargin*2 + 150, GuiMargin*5 + GuiSeparator*2 + 300*2);
             exportToOutputFolder.Width = 150;
             exportToOutputFolder.Click += ExportToOutputFolder;
 
-            exportToVisualStudio.Text = "Export to Visual Studio";
-            exportToVisualStudio.Location = new Point(GuiMargin*2 + 150, GuiMargin*7 + GuiSeparator*2 + 300*2);
-            exportToVisualStudio.Width = 150;
-            exportToVisualStudio.Click += ExportToVisualStudio;
+//            exportToVisualStudio.Text = "Export to Visual Studio";
+//            exportToVisualStudio.Location = new Point(GuiMargin*2 + 150, GuiMargin*7 + GuiSeparator*2 + 300*2);
+//            exportToVisualStudio.Width = 150;
+//            exportToVisualStudio.Click += ExportToVisualStudio;
 
             //            Controls.Add(solutionLabel);
             Controls.Add(testNameLabel);
@@ -154,6 +153,7 @@ namespace Trailbreaker.MainApplication
             Controls.Add(remove);
             Controls.Add(record);
             Controls.Add(rlist);
+            Controls.Add(openFiles);
             Controls.Add(exportToOutputFolder);
 //            Controls.Add(exportToVisualStudio);
 
@@ -235,16 +235,6 @@ namespace Trailbreaker.MainApplication
             Application.Exit();
         }
 
-        private void SelectSolution(object o, EventArgs e)
-        {
-            Debug.WriteLine("Select!");
-            Exporter.workspace = null;
-            Exporter.pageObjectLibrary = null;
-            Exporter.pageObjectTestLibrary = null;
-            Start.FindSolution();
-            Debug.WriteLine("Selected");
-        }
-
         private void EnterTestName(object o, EventArgs e)
         {
             testName = Interaction.InputBox("Please provide a descriptive name for a new test.", "New Test",
@@ -308,14 +298,17 @@ namespace Trailbreaker.MainApplication
 
         public override void AddCharacter(char c)
         {
-            recentAction.Text += c;
+            if (recentAction != null)
+            {
+                recentAction.Text += c;
+            }
         }
 
         private void Record(object sender, EventArgs eventArgs)
         {
             if (recording)
             {
-                exportToVisualStudio.Enabled = true;
+//                exportToVisualStudio.Enabled = true;
                 exportToOutputFolder.Enabled = true;
                 for (int i = 0; i < actions.Count; i++)
                 {
@@ -348,8 +341,6 @@ namespace Trailbreaker.MainApplication
             }
             else
             {
-                exportToVisualStudio.Enabled = false;
-                exportToOutputFolder.Enabled = false;
                 if (actions.Count > 0)
                 {
                     if (MessageBox.Show("Are you sure you would like to record over your previous actions?",
@@ -358,12 +349,15 @@ namespace Trailbreaker.MainApplication
                     {
                         actions.Clear();
                         UpdateListView();
+                        EnterTestName(null, null);
                     }
                     else
                     {
                         return;
                     }
                 }
+                //                exportToVisualStudio.Enabled = false;
+                exportToOutputFolder.Enabled = false;
                 record.Text = "Stop Recording";
                 recording = true;
             }
@@ -461,19 +455,11 @@ namespace Trailbreaker.MainApplication
             return true;
         }
 
-        private void ExportToVisualStudio(Object sender, EventArgs e)
-        {
-            if (ActionsAreNamed())
-            {
-                Exporter.ExportToVisualStudio(actions, head, testName);
-            }
-        }
-
         private void ExportToOutputFolder(Object sender, EventArgs e)
         {
             if (ActionsAreNamed())
             {
-                Exporter.ExportToOutputFolder(actions, head, testName);
+                Exporter.ExportToOutputFolder(actions, head, testName, openFiles.Checked);
             }
         }
     }

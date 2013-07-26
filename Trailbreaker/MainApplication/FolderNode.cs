@@ -80,11 +80,11 @@ namespace Trailbreaker.MainApplication
             return false;
         }
 
-        public virtual void BuildRaw()
+        public virtual void BuildRaw(bool openFiles)
         {
             foreach (FolderNode node in Children)
             {
-                node.BuildRaw();
+                node.BuildRaw(openFiles);
             }
         }
 

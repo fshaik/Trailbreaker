@@ -13,10 +13,10 @@ namespace Trailbreaker.MainApplication
         [STAThread]
         private static void Main(string[] args)
         {
-            if (!Directory.Exists(Exporter.outputPath))
-            {
-                Directory.CreateDirectory(Exporter.outputPath);
-            }
+//            if (!Directory.Exists(Exporter.outputPath))
+//            {
+//                Directory.CreateDirectory(Exporter.outputPath);
+//            }
 
 //            FindSolution();
 
