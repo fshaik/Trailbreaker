@@ -54,7 +54,7 @@ namespace Trailbreaker.MainApplication
             writer.Close();
         }
 
-        public static void ExportToOutputFolder(List<UserAction> actions, FolderNode head, string testName, bool openFiles)
+        public static void ExportToOutputFolder(List<UserAction> actions, FolderNode head, string testName, bool openFiles = true)
         {
             UpdateTreeWithActions(actions, head);
             WriteTreeToXML(head);
@@ -171,6 +171,7 @@ namespace Trailbreaker.MainApplication
             lines.Add("using MBRegressionLibrary.Tests.Attributes;");
             lines.Add("using MBRegressionLibrary.Tests.Tests.BusinessMode;");
             lines.Add("using MbUnit.Framework;");
+            lines.Add("using Bumblebee.Extensions;");
             lines.Add("using " + PageObjectLibraryName + ";");
             lines.Add("");
             lines.Add("namespace " + PageObjectTestLibraryName);
@@ -188,7 +189,7 @@ namespace Trailbreaker.MainApplication
             {
                 if (action.Node.ToLower() == "select")
                 {
-                    lines.Add("\t\t\t\t." + action.Label + ".Options.ToList()[5].Click()");
+                    lines.Add("\t\t\t\t." + action.Label + ".Options.Random().Click()");
                 }
                 else if (action.Node.ToLower() == "input" && action.Type.ToLower() == "checkbox")
                 {

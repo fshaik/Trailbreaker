@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.Serialization;
+using System.Windows.Forms;
 
 namespace Trailbreaker.MainApplication
 {
@@ -33,6 +34,18 @@ namespace Trailbreaker.MainApplication
         public string Path { get; set; }
 
         public string Text = "";
+
+        public void ResolveMultipleClassNames()
+        {
+            string[] classNames = ClassName.Split(new char[] {' '});
+            if (Id == "null" && Name == "null")
+            {
+                if (classNames.Length > 0)
+                {
+//                    MessageBox.Show("The clicked element has more than one class name ascribed to it. You must select one to use!", "Selector Selector", new MessageBoxButtons())
+                }
+            }
+        }
 
         public string GetBestLabel()
         {

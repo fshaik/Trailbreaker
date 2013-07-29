@@ -8,6 +8,8 @@ namespace Trailbreaker.MainApplication
     {
         public static string WebElementString = "WebElement";
 
+        private PageObjectNode ParentPageObjectNode;
+
         public string Label;
         public string Name;
         public string Id;
@@ -17,10 +19,11 @@ namespace Trailbreaker.MainApplication
         public string ToName;
         public string Type;
 
-        public WebElementNode(FolderNode parent, string label, string name, string id, string cclass, string node, string type,
+        public WebElementNode(PageObjectNode parent, string label, string name, string id, string cclass, string node, string type,
                               string path, string toname)
             : base(parent, WebElementString)
         {
+            ParentPageObjectNode = parent;
             Label = label;
             Name = name;
             Id = id;
@@ -52,7 +55,7 @@ namespace Trailbreaker.MainApplication
 
         public override void UpdateAction(ref UserAction userAction)
         {
-            if (Path == userAction.Path)
+            if (Path == userAction.Path && ParentPageObjectNode.Name == userAction.Page)
             {
                 userAction.Label = Label;
             }

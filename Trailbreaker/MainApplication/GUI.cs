@@ -33,12 +33,9 @@ namespace Trailbreaker.MainApplication
 
             SuspendLayout();
 
-            FormBorderStyle = FormBorderStyle.FixedSingle;
-
             Text = "Trailbreaker / Page Object and Test Generator - Test Name: " + testName;
-            int width = 750;
-            int height = 600;
-            ClientSize = new Size(width, height);
+            ClientSize = new Size(800, 600);
+            MinimumSize = new Size(640, 480);
 
             newTest.Click += NewTest;
             enterTestName.Click += EnterTestName;
@@ -47,38 +44,33 @@ namespace Trailbreaker.MainApplication
             menu.MenuItems.Add(fileMenu);
             Menu = menu;
 
-            grid.Location = new Point(0, 0);
-            grid.Size = new Size(width, height - 40);
-            grid.EditMode = DataGridViewEditMode.EditOnKeystroke;
+            grid.Columns.Add("Label (Editable)", "Label (Editable)");
+            grid.Columns.Add("Detected Page", "Detected Page");
+            grid.Columns.Add("Selector", "Selector");
+            grid.Columns.Add("Text to Enter (Editable)", "Text to Enter (Editable)");
 
             grid.RowHeadersVisible = false;
             grid.AllowUserToResizeRows = false;
-
             grid.AllowUserToAddRows = false;
             grid.AllowUserToDeleteRows = false;
             grid.AllowUserToOrderColumns = false;
 
+            grid.EditMode = DataGridViewEditMode.EditOnKeystroke;
+
             grid.CellEndEdit += GridEdit;
-
-            grid.Columns.Add("Label", "Label");
-            grid.Columns[0].Width = width/3 - 1;
-            grid.Columns.Add("Selector", "Selector");
-            grid.Columns[1].Width = width/3 - 1;
-            grid.Columns.Add("Text to Enter", "Text to Enter");
-            grid.Columns[2].Width = width / 3 - 1;
-
             grid.KeyUp += KeyUpHandler;
 
             record.Text = "Start Recording / New Test";
-            record.Width = width;
-            record.Height = 40;
-            record.Location = new Point(0, height - 40);
+
             record.Click += Record;
+
+            UpdateControlSize(null, null);
 
             Controls.Add(grid);
             Controls.Add(record);
 
             FormClosed += EndApplication;
+            Resize += UpdateControlSize;
 
             ResumeLayout();
 
@@ -89,13 +81,24 @@ namespace Trailbreaker.MainApplication
             UpdateGridView();
         }
 
+        private void UpdateControlSize(object o, EventArgs e)
+        {
+            grid.Size = new Size(ClientSize.Width, ClientSize.Height - 40);
+            foreach (DataGridViewColumn col in grid.Columns)
+            {
+                col.Width = grid.Width/grid.ColumnCount - 20/grid.ColumnCount;
+            }
+            record.Location = new Point(0, ClientSize.Height - 40);
+            record.Size = new Size(ClientSize.Width, 40);
+        }
+
         private void GridEdit(object o, DataGridViewCellEventArgs e)
         {
             if (e.ColumnIndex == 0)
             {
                 actions[e.RowIndex].Label = grid.Rows[e.RowIndex].Cells[0].Value.ToString();
             }
-            else if (e.ColumnIndex == 2)
+            else if (e.ColumnIndex == 3)
             {
                 actions[e.RowIndex].Text = grid.Rows[e.RowIndex].Cells[2].Value.ToString();
             }
@@ -148,7 +151,7 @@ namespace Trailbreaker.MainApplication
         {
             foreach (UserAction userAction in actions)
             {
-                if (userAction.Path == action.Path)
+                if (userAction.Path == action.Path && userAction.Page == action.Page)
                 {
                     return true;
                 }
@@ -158,13 +161,26 @@ namespace Trailbreaker.MainApplication
 
         public override void AddAction(UserAction userAction)
         {
-            userAction.Label = userAction.GetBestLabel();
-            recentAction = userAction;
+            //If this exact action already exists in the list then the click event is ignored.
             if (!ActionExists(userAction))
             {
+//                userAction.ResolveMultipleClassNames();
+
+                //This action will receive characters for it's Text field (Text Entered).
+                recentAction = userAction;
+                //It is also added to the list of actions.
                 actions.Add(userAction);
+
+                //Its label is set to the best deduced label.
+                userAction.Label = userAction.GetBestLabel();
+                //If the tree already contains this action, then the actions label has already been set and this method will set the label again.
+                head.UpdateAction(ref userAction);
+
+                //Updates the grid to include the new action.
+                UpdateGridView();
+                //The scrollbar is set to the bottom of the grid.
+                grid.FirstDisplayedScrollingRowIndex = grid.RowCount - 1;
             }
-            UpdateGridView();
         }
 
         public override void AddCharacter(char c)
@@ -187,21 +203,18 @@ namespace Trailbreaker.MainApplication
                         actions[i].ToPage = actions[i].Page;
                     }
 
-                    UserAction action = actions[i];
-                    head.UpdateAction(ref action);
-                    actions[i] = action;
-
-                    if (!Exporter.PagesToOpen.Contains(action.Page))
+                    if (!Exporter.PagesToOpen.Contains(actions[i].Page))
                     {
-                        Exporter.PagesToOpen.Add(action.Page);
+                        Exporter.PagesToOpen.Add(actions[i].Page);
                     }
                 }
 
-                Exporter.ExportToOutputFolder(actions, head, testName,
-                                              MessageBox.Show("Would you like to view the generated files now?",
-                                                              "Convenience",
-                                                              MessageBoxButtons.YesNo, MessageBoxIcon.Question) ==
-                                              DialogResult.Yes);
+                Exporter.ExportToOutputFolder(actions, head, testName);
+//                Exporter.ExportToOutputFolder(actions, head, testName,
+//                                              MessageBox.Show("Would you like to view the generated files now?",
+//                                                              "Convenience",
+//                                                              MessageBoxButtons.YesNo, MessageBoxIcon.Question) ==
+//                                              DialogResult.Yes);
 
                 record.Text = "Start Recording / New Test";
                 recording = false;
@@ -236,6 +249,10 @@ namespace Trailbreaker.MainApplication
                 var labelCell = new DataGridViewTextBoxCell();
                 labelCell.Value = act.Label;
                 row.Cells.Add(labelCell);
+
+                var pageCell = new DataGridViewTextBoxCell();
+                pageCell.Value = act.Page;
+                row.Cells.Add(pageCell);
 
                 var stringCell = new DataGridViewTextBoxCell();
                 stringCell.Value = act.ToString();
