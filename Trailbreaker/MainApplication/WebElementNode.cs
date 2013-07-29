@@ -54,7 +54,6 @@ namespace Trailbreaker.MainApplication
         {
             if (Path == userAction.Path)
             {
-//                userAction.IsLabeled = true;
                 userAction.Label = Label;
             }
         }
@@ -109,27 +108,5 @@ namespace Trailbreaker.MainApplication
 
             return lines.ToArray();
         }
-
-//        public void BuildRaw(StreamWriter writer)
-//        {
-//            string[] build = this.Build();
-//
-//            foreach (string s in build)
-//            {
-//                writer.WriteLine(s);
-//            }
-//        }
-//
-//        public StringBuilder Build(StringBuilder builder)
-//        {
-//            string[] build = this.Build();
-//
-//            foreach (string s in build)
-//            {
-//                builder.Append(s);
-//            }
-//
-//            return builder;
-//        }
     }
 }

@@ -87,54 +87,5 @@ namespace Trailbreaker.MainApplication
                 node.BuildRaw(openFiles);
             }
         }
-
-        public IProject Build(IProject project)
-        {
-            IProject cproject = project;
-            IDocument doc;
-
-            foreach (FolderNode node in Children)
-            {
-                doc = null;
-                if (node is PageObjectNode)
-                {
-                    var ponode = node as PageObjectNode;
-
-//                    string newclassname = ponode.Name;
-//
-//                    if (Exporter.ProjectContainsDocument(cproject, newclassname))
-//                    {
-//                        int i = 0;
-//                        do
-//                        {
-//                            newclassname = ponode.Name + i.ToString();
-//                            i++;
-//                        } while (Exporter.ProjectContainsDocument(cproject, newclassname));
-//                    }
-//                    doc = cproject.AddDocument(newclassname, ponode.Build().ToString());
-
-                    foreach (IDocument document in cproject.Documents)
-                    {
-                        Debug.WriteLine("Document " + document.Name + " exists!");
-                        if (document.Name == ponode.Name + ".cs")
-                        {
-                            doc = document.UpdateText(Syntax.ParseCompilationUnit(ponode.BuildString().ToString()).GetText());
-                            break;
-                        }
-                    }
-                    if (doc == null)
-                    {
-                        Debug.WriteLine("Document " + ponode.Name + " doesn't exist!");
-                        doc = cproject.AddDocument(ponode.Name, ponode.BuildString().ToString());
-                    }
-
-//                    doc.Organize();
-//                    doc.Cleanup();
-                    cproject = doc.Project;
-                }
-            }
-
-            return cproject;
-        }
     }
 }

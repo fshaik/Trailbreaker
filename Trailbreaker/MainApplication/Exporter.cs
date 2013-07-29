@@ -13,21 +13,21 @@ namespace Trailbreaker.MainApplication
     {
         public static string OutputSolutionSetting = "outputSolution";
 
-        public static string outputPath = Path.Combine(
+        public static string OutputPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrailbreakerOutput");
 
-        public static string pageObjectsFolder = "\\PageObjects\\";
-        public static string testsFolder = "\\Tests\\";
+        public static string PageObjectsFolder = "\\PageObjects\\";
+        public static string TestsFolder = "\\Tests\\";
 
-        public static IWorkspace workspace = null;
-        public static string solutionPath = null;
-        public static string pageObjectLibraryName = "MBRegressionLibrary";
-        public static IProject pageObjectLibrary = null;
-        public static string pageObjectTestLibraryName = "MBRegressionLibrary.Tests";
-        public static IProject pageObjectTestLibrary = null;
-        public static string treeName = "MBRegressionLibrary.xml";
+        public static IWorkspace Workspace = null;
+        public static string SolutionPath = null;
+        public static string PageObjectLibraryName = "MBRegressionLibrary";
+        public static IProject PageObjectLibrary = null;
+        public static string PageObjectTestLibraryName = "MBRegressionLibrary.Tests";
+        public static IProject PageObjectTestLibrary = null;
+        public static string TreeName = "MBRegressionLibrary.xml";
 
-        public static List<string> pagesToOpen = new List<string>();
+        public static List<string> PagesToOpen = new List<string>();
 
         private static void UpdateTreeWithActions(List<UserAction> actions, FolderNode head)
         {
@@ -44,8 +44,8 @@ namespace Trailbreaker.MainApplication
         private static void WriteTreeToXML(FolderNode head)
         {
             //Write the nodes (via tree root node) to the XML library.
-            Directory.CreateDirectory(outputPath);
-            var writer = new XmlTextWriter(outputPath + "\\" + treeName, null);
+            Directory.CreateDirectory(OutputPath);
+            var writer = new XmlTextWriter(OutputPath + "\\" + TreeName, null);
             writer.Formatting = Formatting.Indented;
             writer.WriteStartDocument();
             head.WriteToXml(writer);
@@ -54,51 +54,19 @@ namespace Trailbreaker.MainApplication
             writer.Close();
         }
 
-        public static void ExportToVisualStudio(List<UserAction> actions, FolderNode head, string testName)
-        {
-            UpdateTreeWithActions(actions, head);
-            WriteTreeToXML(head);
-
-            //Generate the page objects.
-            IEnumerable<IProject> projects;
-
-            projects = workspace.CurrentSolution.GetProjectsByName(pageObjectLibraryName);
-            foreach (IProject proj in projects)
-            {
-                pageObjectLibrary = proj;
-            }
-            bool result = workspace.ApplyChanges(pageObjectLibrary.Solution, head.Build(pageObjectLibrary).Solution,
-                                                 "Saved new page objects!");
-            Debug.WriteLine("SUCCESSFULLY ADDED PAGE OBJECTS: " + result.ToString());
-
-            //If there are more than 1 recorded actions, then generate a test.
-            if (actions.Count > 1)
-            {
-                projects = workspace.CurrentSolution.GetProjectsByName(pageObjectTestLibraryName);
-                foreach (IProject proj in projects)
-                {
-                    pageObjectTestLibrary = proj;
-                }
-                result = workspace.ApplyChanges(pageObjectTestLibrary.Solution,
-                                                CreateTest(pageObjectTestLibrary, actions, testName).Solution,
-                                                "Saved a new test!");
-                Debug.WriteLine("SUCCESSFULLY ADDED A TEST: " + result.ToString());
-            }
-        }
-
         public static void ExportToOutputFolder(List<UserAction> actions, FolderNode head, string testName, bool openFiles)
         {
             UpdateTreeWithActions(actions, head);
             WriteTreeToXML(head);
 
-            if (!Directory.Exists(outputPath + pageObjectsFolder))
+            if (!Directory.Exists(OutputPath + PageObjectsFolder))
             {
-                Directory.CreateDirectory(outputPath + pageObjectsFolder);
+                Directory.CreateDirectory(OutputPath + PageObjectsFolder);
             }
 
-            if (!Directory.Exists(outputPath + testsFolder))
+            if (!Directory.Exists(OutputPath + TestsFolder))
             {
-                Directory.CreateDirectory(outputPath + testsFolder);
+                Directory.CreateDirectory(OutputPath + TestsFolder);
             }
 
             head.BuildRaw(openFiles);
@@ -109,13 +77,13 @@ namespace Trailbreaker.MainApplication
 
             MessageBox.Show(
                 actions.Count + " new page objects " + (actions.Count > 1 ? " and a new test " : "") +
-                "were exported to \"" + outputPath + "\"!",
+                "were exported to \"" + OutputPath + "\"!",
                 "Export to Output Folder", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
         }
 
         public static FolderNode LoadPageObjectTree()
         {
-            var head = new FolderNode(null, pageObjectLibraryName);
+            var head = new FolderNode(null, PageObjectLibraryName);
             FolderNode curFolder;
             FolderNode folder;
             PageObjectNode pageObject = null;
@@ -133,13 +101,13 @@ namespace Trailbreaker.MainApplication
             XmlTextReader reader;
             try
             {
-                reader = new XmlTextReader(outputPath + "\\" + treeName);
+                reader = new XmlTextReader(OutputPath + "\\" + TreeName);
                 while (true)
                 {
                     reader.Read();
-                    if (reader.Name == pageObjectLibraryName)
+                    if (reader.Name == PageObjectLibraryName)
                     {
-                        head = new FolderNode(null, pageObjectLibraryName);
+                        head = new FolderNode(null, PageObjectLibraryName);
                         curFolder = head;
                         break;
                     }
@@ -194,31 +162,18 @@ namespace Trailbreaker.MainApplication
             return head;
         }
 
-        public static bool ProjectContainsDocument(IProject project, string name)
-        {
-            foreach (IDocument document in project.Documents)
-            {
-                if (document.Name == name + ".cs")
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         private static IEnumerable<string> BuildTest(List<UserAction> actions, string testName)
         {
             var lines = new List<string>();
 
-//            lines.Add("using System;");
             lines.Add("using MBRegressionLibrary.Base;");
             lines.Add("using MBRegressionLibrary.Clients;");
             lines.Add("using MBRegressionLibrary.Tests.Attributes;");
             lines.Add("using MBRegressionLibrary.Tests.Tests.BusinessMode;");
             lines.Add("using MbUnit.Framework;");
-            lines.Add("using " + pageObjectLibraryName + ";");
+            lines.Add("using " + PageObjectLibraryName + ";");
             lines.Add("");
-            lines.Add("namespace " + pageObjectTestLibraryName);
+            lines.Add("namespace " + PageObjectTestLibraryName);
             lines.Add("{");
             lines.Add("\t[Parallelizable]");
             lines.Add("\t[Site(\"AutobotMaster2\")]");
@@ -227,11 +182,6 @@ namespace Trailbreaker.MainApplication
             lines.Add("\t\t[Test]");
             lines.Add("\t\tpublic void RunSimple" + testName + "Test()");
             lines.Add("\t\t{");
-//            lines.Add(
-//                "\t\t\tSession.NavigateTo<" + actions[0].Page +
-//                ">(\"https://dev7.mindbodyonline.com/ASP/adm/home.asp?studioid=-40000\");");
-
-            //            lines.Add("\t\t\tSession.Driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(1));");
             lines.Add("\t\t\tSession.CurrentBlock<BusinessModePage>().GoTo<" + testName + ">()");
 
             foreach (UserAction action in actions)
@@ -253,27 +203,6 @@ namespace Trailbreaker.MainApplication
                 {
                     lines.Add("\t\t\t\t." + action.Label + ".Click()");
                 }
-//                if (action.Node.ToLower() == "select")
-//                {
-//                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
-//                              ".Options.Single().Click();");
-//                }
-//                else if (action.Node.ToLower() == "input" && action.Type.ToLower() == "checkbox")
-//                {
-//                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
-//                              ".Toggle();");
-//                }
-//                else if (action.Node.ToLower() == "input" && action.Type.ToLower() != "button" &&
-//                         action.Type.ToLower() != "submit")
-//                {
-//                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
-//                              ".EnterText(\"" + action.Text + "\");");
-//                }
-//                else
-//                {
-//                    lines.Add("\t\t\tSession.CurrentBlock<" + action.Page + ">()." + action.Label +
-//                              ".Click();");
-//                }
             }
             lines.Add(";");
 
@@ -286,7 +215,7 @@ namespace Trailbreaker.MainApplication
 
         private static void CreateTestRaw(List<UserAction> actions, string testName, bool openFiles)
         {
-            string path = outputPath + "\\Tests\\" + testName + "Tests.cs";
+            string path = OutputPath + "\\Tests\\" + testName + "Tests.cs";
 
             FileStream fileStream = File.Create(path);
             var writer = new StreamWriter(fileStream);
@@ -311,54 +240,6 @@ namespace Trailbreaker.MainApplication
                 pi.Verb = "OPEN";
                 Process.Start(pi);
             }
-        }
-
-        private static IProject CreateTest(IProject project, List<UserAction> actions, string testName)
-        {
-            var builder = new StringBuilder();
-
-            IEnumerable<string> lines = BuildTest(actions, testName);
-
-            foreach (string s in lines)
-            {
-                builder.Append(s);
-            }
-
-            IProject cproject = project;
-            IDocument doc = null;
-            string newclassname = testName;
-
-            if (ProjectContainsDocument(cproject, newclassname))
-            {
-                int i = 0;
-                do
-                {
-                    newclassname = testName + i.ToString();
-                    i++;
-                } while (ProjectContainsDocument(cproject, newclassname));
-            }
-            doc = cproject.AddDocument(newclassname, builder.ToString());
-
-            //            foreach (IDocument document in cproject.Documents)
-            //            {
-            //                Debug.WriteLine("Document " + document.Name + " exists!");
-            //                if (document.Name == classname + ".cs")
-            //                {
-            //                    doc = document.UpdateText(Syntax.ParseCompilationUnit(builder.ToString()).GetText());
-            //                    break;
-            //                }
-            //            }
-            //            if (doc == null)
-            //            {
-            //                Debug.WriteLine("Document " + classname + " doesn't exist!");
-            //                doc = cproject.AddDocument(classname, builder.ToString());
-            //            }
-
-            //            doc.Organize();
-            //            doc.Cleanup();
-            cproject = doc.Project;
-
-            return cproject;
         }
     }
 }

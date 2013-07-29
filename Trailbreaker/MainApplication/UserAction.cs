@@ -6,7 +6,6 @@ namespace Trailbreaker.MainApplication
     [DataContract]
     public class UserAction
     {
-//        public bool IsLabeled = false;
         public string ToPage;
 
         [DataMember(Name = "Label", IsRequired = true)]
@@ -33,7 +32,6 @@ namespace Trailbreaker.MainApplication
         [DataMember(Name = "Path", IsRequired = true)]
         public string Path { get; set; }
 
-//        [DataMember(Name = "Text", IsRequired = true)]
         public string Text = "";
 
         public string GetBestLabel()
@@ -76,22 +74,6 @@ namespace Trailbreaker.MainApplication
                 by = "By.XPath(\"" + Path.Replace("\"", "\\\"") + "\")";
             }
             return by;
-        }
-
-        public void Print()
-        {
-            Debug.WriteLine("Label: " + Label);
-            Debug.WriteLine("Name: " + Name);
-            Debug.WriteLine("Id: " + Id);
-            Debug.WriteLine("ClassName: " + ClassName);
-            Debug.WriteLine("Page: " + Page);
-            Debug.WriteLine("Node: " + Node);
-            Debug.WriteLine("Type: " + Type);
-            Debug.WriteLine("Path: " + Path);
-            Debug.WriteLine("Text: " + Text);
-//            Debug.WriteLine("Label: " + ToPage);
-//            Debug.WriteLine("Label: " + IsLabeled);
-            Debug.WriteLine("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
         }
     }
 }
