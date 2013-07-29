@@ -54,7 +54,7 @@ namespace Trailbreaker.MainApplication
         {
             if (Path == userAction.Path)
             {
-                userAction.IsLabeled = true;
+//                userAction.IsLabeled = true;
                 userAction.Label = Label;
             }
         }

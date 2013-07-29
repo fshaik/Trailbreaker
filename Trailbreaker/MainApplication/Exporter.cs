@@ -27,6 +27,8 @@ namespace Trailbreaker.MainApplication
         public static IProject pageObjectTestLibrary = null;
         public static string treeName = "MBRegressionLibrary.xml";
 
+        public static List<string> pagesToOpen = new List<string>();
+
         private static void UpdateTreeWithActions(List<UserAction> actions, FolderNode head)
         {
             //Update the head nodes with the user-altered actions (via GUI).

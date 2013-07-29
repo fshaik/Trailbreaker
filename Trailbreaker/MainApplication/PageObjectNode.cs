@@ -132,9 +132,7 @@ namespace Trailbreaker.MainApplication
             writer.Close();
             fileStream.Close();
 
-            Debug.WriteLine("RAN!");
-
-            if (openFiles && GUI.testName == Name)
+            if (openFiles && (GUI.testName == Name || Exporter.pagesToOpen.Contains(Name)))
             {
                 ProcessStartInfo pi = new ProcessStartInfo(path);
                 pi.Arguments = Path.GetFileName(path);

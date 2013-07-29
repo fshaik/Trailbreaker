@@ -6,7 +6,7 @@ namespace Trailbreaker.MainApplication
     [DataContract]
     public class UserAction
     {
-        public bool IsLabeled = false;
+//        public bool IsLabeled = false;
         public string ToPage;
 
         [DataMember(Name = "Label", IsRequired = true)]
@@ -52,7 +52,7 @@ namespace Trailbreaker.MainApplication
             }
             else
             {
-                return Path;
+                return Node + "/" + Type;
             }
         }
 
