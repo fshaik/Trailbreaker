@@ -7,8 +7,12 @@ using System.Xml;
 
 namespace Trailbreaker.MainApplication
 {
+    /// <summary>
+    ///     This class represents a whole PageObject which contains WebElements (defined by selectors).
+    /// </summary>
     internal class PageObjectNode : FolderNode
     {
+        //A string used for the XML tree.
         public static string PageObjectString = "PageObject";
 
         public new List<WebElementNode> Children = new List<WebElementNode>();
@@ -20,16 +24,13 @@ namespace Trailbreaker.MainApplication
             Name = name;
         }
 
-        public override TreeNode GetTreeNode()
-        {
-            var node = new TreeNode(Name);
-            foreach (WebElementNode child in Children)
-            {
-                node.Nodes.Add(child.GetTreeNode());
-            }
-            return node;
-        }
-
+        /// <summary>
+        ///     Writes the PageObjectString as the start of an XML element, and then fills it
+        ///     with its children and an attribute for it's name.
+        /// </summary>
+        /// <param name="writer">
+        ///     Accepts the primary writer.
+        /// </param>
         public override void WriteToXml(XmlTextWriter writer)
         {
             writer.WriteStartElement(Title);
@@ -41,6 +42,12 @@ namespace Trailbreaker.MainApplication
             writer.WriteEndElement();
         }
 
+        /// <summary>
+        ///     This method updates the given user action by passing it onto its children.
+        /// </summary>
+        /// <param name="userAction">
+        ///     A user action which requires an update check.
+        /// </param>
         public override void UpdateAction(ref UserAction userAction)
         {
             foreach (WebElementNode element in Children)
@@ -49,11 +56,22 @@ namespace Trailbreaker.MainApplication
             }
         }
 
+        /// <summary>
+        ///     This method updates the tree given a user action. If necessary, a new child will
+        ///     be added because the UserAction's path doesn't have a corresponding WebElementNode.
+        ///     Otherwise, the WebElementNode with a matching patch has its values updated.
+        /// </summary>
+        /// <param name="userAction">
+        ///     The UserAction to update the tree with.
+        /// </param>
+        /// <returns>
+        ///     Should only return true unless there was an error (the action's page should always
+        ///     have the name of this page object!).
+        /// </returns>
         public override bool Update(UserAction userAction)
         {
             if (Name == userAction.Page)
             {
-                //If this PageObjectElement contains a PageObjectWebElement with this new action's path, then a new one doesn't need to be added.
                 foreach (WebElementNode element in Children)
                 {
                     if (element.Path == userAction.Path)
@@ -64,23 +82,41 @@ namespace Trailbreaker.MainApplication
                         element.ClassName = userAction.ClassName;
                         element.Node = userAction.Node;
                         element.Type = userAction.Type;
-                        element.ToName = userAction.ToPage;
+                        element.ToPage = userAction.ToPage;
+                        element.IsEnumerable = userAction.IsEnumerable;
                         return true;
                     }
                 }
                 Children.Add(new WebElementNode(this, userAction.Label, userAction.Name, userAction.Id, userAction.ClassName, userAction.Node,
                                                 userAction.Type, userAction.Path,
-                                                userAction.ToPage));
+                                                userAction.ToPage, userAction.IsEnumerable));
                 return true;
             }
             return false;
         }
 
+        /// <summary>
+        ///     This PageObjectNode should or does contain the given UserAction if they share the
+        ///     same page's name.
+        /// </summary>
+        /// <param name="userAction">
+        ///     A UserAction to check containment.
+        /// </param>
+        /// <returns>
+        ///     True if the page should or does contain the action.
+        /// </returns>
         public override bool Contains(UserAction userAction)
         {
             return Name == userAction.Page;
         }
 
+        /// <summary>
+        ///     This is a convenience method to get a list of strings (each representing a line of
+        ///     code) for the current page object.
+        /// </summary>
+        /// <returns>
+        ///     An enumerable, reusable ordered set of strings.
+        /// </returns>
         private IEnumerable<string> Build()
         {
             var lines = new List<string>();
@@ -110,7 +146,11 @@ namespace Trailbreaker.MainApplication
             return lines.ToArray();
         }
 
-        public override void BuildRaw(bool openFiles)
+        /// <summary>
+        ///     Builds the content of this PageObjectNode into raw .cs class files. Uses the
+        ///     "PageObjects" output folder and ProcessStartInfo to open them after.
+        /// </summary>
+        public override void BuildRaw()
         {
             if (Name == null)
             {
@@ -132,7 +172,7 @@ namespace Trailbreaker.MainApplication
             writer.Close();
             fileStream.Close();
 
-            if (openFiles && (GUI.testName == Name || Exporter.PagesToOpen.Contains(Name)))
+            if (PageObjectCreatorGui.TestName == Name || Exporter.PagesToOpen.Contains(Name))
             {
                 ProcessStartInfo pi = new ProcessStartInfo(path);
                 pi.Arguments = Path.GetFileName(path);
@@ -142,19 +182,6 @@ namespace Trailbreaker.MainApplication
                 pi.Verb = "OPEN";
                 Process.Start(pi);
             }
-        }
-
-        public StringBuilder BuildString()
-        {
-            var builder = new StringBuilder();
-            IEnumerable<string> build = Build();
-
-            foreach (string s in build)
-            {
-                builder.Append(s);
-            }
-
-            return builder;
         }
     }
 }

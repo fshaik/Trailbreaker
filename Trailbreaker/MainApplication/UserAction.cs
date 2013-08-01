@@ -1,12 +1,18 @@
-﻿using System.Diagnostics;
-using System.Runtime.Serialization;
-using System.Windows.Forms;
+﻿using System.Runtime.Serialization;
 
 namespace Trailbreaker.MainApplication
 {
+    /// <summary>
+    ///     This class represents a click by a user on an element of a web page. It essentially
+    ///     contains a good deal of metadata regarding the clicked element. Most of the class is
+    ///     defined by serializable elements, but some of the data is altered as other information
+    ///     is determined or found regarding the action's element.
+    /// </summary>
     [DataContract]
     public class UserAction
     {
+        public bool IsEnumerable = false;
+        public string Text = "";
         public string ToPage;
 
         [DataMember(Name = "Label", IsRequired = true)]
@@ -33,11 +39,13 @@ namespace Trailbreaker.MainApplication
         [DataMember(Name = "Path", IsRequired = true)]
         public string Path { get; set; }
 
-        public string Text = "";
-
+        /// <summary>
+        ///     This is not used, but is intended to be completed and solve the problem regarding
+        ///     the recorder using multiple class names in the By.ClassName selector.
+        /// </summary>
         public void ResolveMultipleClassNames()
         {
-            string[] classNames = ClassName.Split(new char[] {' '});
+            string[] classNames = ClassName.Split(new[] {' '});
             if (Id == "null" && Name == "null")
             {
                 if (classNames.Length > 0)
@@ -47,6 +55,12 @@ namespace Trailbreaker.MainApplication
             }
         }
 
+        /// <summary>
+        ///     A method to get the best Label for a user's action (uses the most valuable metadata).
+        /// </summary>
+        /// <returns>
+        ///     A string to be the label of this UserAction.
+        /// </returns>
         public string GetBestLabel()
         {
             if (Id != "null")
@@ -67,6 +81,12 @@ namespace Trailbreaker.MainApplication
             }
         }
 
+        /// <summary>
+        ///     A method to find the best Selenium By selector for this action.
+        /// </summary>
+        /// <returns>
+        ///     A string for the selector.
+        /// </returns>
         public override string ToString()
         {
             string by;

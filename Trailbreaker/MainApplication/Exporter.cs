@@ -2,36 +2,54 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using Roslyn.Services;
 
 namespace Trailbreaker.MainApplication
 {
+    /// <summary>
+    ///     This class handles all exporting needs, including the translation between UserActions to
+    ///     tree nodes, the creation of files, the updating of the tree XML, and the handling of
+    ///     tree nodes.
+    /// </summary>
     public class Exporter
     {
-        public static string OutputSolutionSetting = "outputSolution";
-
+        //The path to Trailbreaker's output folder. It is in MyDocuments!
         public static string OutputPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrailbreakerOutput");
 
+        //Three folders for three different types of .cs class files generated.
         public static string PageObjectsFolder = "\\PageObjects\\";
         public static string TestsFolder = "\\Tests\\";
+        public static string BlocksFolder = "\\Blocks\\";
 
+        public static string TreeName = "MBRegressionLibrary.xml";
+
+        //These are not used, but are part of Roslyn.
         public static IWorkspace Workspace = null;
         public static string SolutionPath = null;
         public static string PageObjectLibraryName = "MBRegressionLibrary";
         public static IProject PageObjectLibrary = null;
         public static string PageObjectTestLibraryName = "MBRegressionLibrary.Tests";
         public static IProject PageObjectTestLibrary = null;
-        public static string TreeName = "MBRegressionLibrary.xml";
 
+        //An instance variable to keep track of the .cs class files to open after creating them.
         public static List<string> PagesToOpen = new List<string>();
 
+        /// <summary>
+        ///     This function updates the tree by passing each action to the tree's root node
+        ///     (head) and either updating elements if they already exist or by creating new ones
+        ///     which will be added to the XML/Tree.
+        /// </summary>
+        /// <param name="actions">
+        ///     A list of UserActions to update the tree with.
+        /// </param>
+        /// <param name="head">
+        ///     The head of the tree.
+        /// </param>
         private static void UpdateTreeWithActions(List<UserAction> actions, FolderNode head)
         {
-            //Update the head nodes with the user-altered actions (via GUI).
             foreach (UserAction action in actions)
             {
                 if (head.Update(action) == false)
@@ -41,24 +59,32 @@ namespace Trailbreaker.MainApplication
             }
         }
 
-        private static void WriteTreeToXML(FolderNode head)
+        /// <summary>
+        ///     This method uses an XmlTextWriter to write the tree to an XML file, starting with
+        ///     the head node.
+        /// </summary>
+        /// <param name="head">
+        ///     The root node of the tree.
+        /// </param>
+        private static void WriteTreeToXml(FolderNode head)
         {
-            //Write the nodes (via tree root node) to the XML library.
             Directory.CreateDirectory(OutputPath);
             var writer = new XmlTextWriter(OutputPath + "\\" + TreeName, null);
             writer.Formatting = Formatting.Indented;
             writer.WriteStartDocument();
+
             head.WriteToXml(writer);
+
             writer.WriteEndDocument();
             writer.Flush();
             writer.Close();
         }
 
-        public static void ExportToOutputFolder(List<UserAction> actions, FolderNode head, string testName, bool openFiles = true)
+        /// <summary>
+        ///     This method simply makes sure each directory exists for smooth file writing.
+        /// </summary>
+        private static void CheckDirectories()
         {
-            UpdateTreeWithActions(actions, head);
-            WriteTreeToXML(head);
-
             if (!Directory.Exists(OutputPath + PageObjectsFolder))
             {
                 Directory.CreateDirectory(OutputPath + PageObjectsFolder);
@@ -69,39 +95,90 @@ namespace Trailbreaker.MainApplication
                 Directory.CreateDirectory(OutputPath + TestsFolder);
             }
 
-            head.BuildRaw(openFiles);
-            if (actions.Count > 1)
+            if (!Directory.Exists(OutputPath + BlocksFolder))
             {
-                CreateTestRaw(actions, testName, openFiles);
+                Directory.CreateDirectory(OutputPath + BlocksFolder);
             }
-
-            MessageBox.Show(
-                actions.Count + " new page objects " + (actions.Count > 1 ? " and a new test " : "") +
-                "were exported to \"" + OutputPath + "\"!",
-                "Export to Output Folder", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
         }
 
+        /// <summary>
+        ///     This method, for the BlockCreatorGui, creates a miniature tree and fills it with the
+        ///     given actions for the block. Then, it builds the tree.
+        /// </summary>
+        /// <param name="elements">
+        ///     The elements of the block.
+        /// </param>
+        /// <param name="blockName">
+        ///     The name of the block.
+        /// </param>
+        public static void ExportBlock(List<UserAction> elements, string blockName)
+        {
+            if (elements.Count > 0)
+            {
+                CheckDirectories();
+
+                var block = new PageObjectNode(null, blockName);
+                foreach (UserAction action in elements)
+                {
+                    block.Children.Add(new WebElementNode(block, action.Label, action.Name, action.Id, action.ClassName,
+                                                          action.Node, action.Type, action.Path, blockName,
+                                                          action.IsEnumerable));
+                }
+
+                block.BuildRaw();
+            }
+        }
+
+        /// <summary>
+        ///     For the PageObjectCreatorGui, this method will update the tree with the actions,
+        ///     write the tree to an XML file, check directories, build the files, and create
+        ///     a test file.
+        /// </summary>
+        /// <param name="actions">
+        ///     The actions from the PageObjectCreatorGui.
+        /// </param>
+        /// <param name="head">
+        ///     The head of the tree.
+        /// </param>
+        /// <param name="testName">
+        ///     The desired name of the test.
+        /// </param>
+        public static void ExportToOutputFolder(List<UserAction> actions, FolderNode head, string testName)
+        {
+            if (actions.Count > 1)
+            {
+                UpdateTreeWithActions(actions, head);
+                WriteTreeToXml(head);
+
+                CheckDirectories();
+
+                head.BuildRaw();
+                CreateTestRaw(actions, testName);
+
+                MessageBox.Show(
+                    actions.Count + " new page objects " + (actions.Count > 1 ? " and a new test " : "") +
+                    "were exported to \"" + OutputPath + "\"!",
+                    "Export to Output Folder", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
+        }
+
+        /// <summary>
+        ///     Used when the application is first run, this method reads the entire XML file and
+        ///     creates corresponding node objects (FolderNode, PageObjectNode, and WebElementNode)
+        ///     to be used later for exporting purposes.
+        /// </summary>
+        /// <returns>
+        ///     Returns the root node (head) of the loaded tree.
+        /// </returns>
         public static FolderNode LoadPageObjectTree()
         {
             var head = new FolderNode(null, PageObjectLibraryName);
-            FolderNode curFolder;
-            FolderNode folder;
             PageObjectNode pageObject = null;
-            WebElementNode webElement;
 
-            string label;
-            string name;
-            string id;
-            string cclass;
-            string node;
-            string type;
-            string path;
-            string toname;
-
-            XmlTextReader reader;
             try
             {
-                reader = new XmlTextReader(OutputPath + "\\" + TreeName);
+                var reader = new XmlTextReader(OutputPath + "\\" + TreeName);
+                FolderNode curFolder;
                 while (true)
                 {
                     reader.Read();
@@ -123,25 +200,29 @@ namespace Trailbreaker.MainApplication
                         }
                         else if (reader.Name == WebElementNode.WebElementString)
                         {
-                            label = reader.GetAttribute("Label");
-                            name = reader.GetAttribute("Name");
-                            id = reader.GetAttribute("Id");
-                            cclass = reader.GetAttribute("Class");
-                            node = reader.GetAttribute("Node");
-                            type = reader.GetAttribute("Type");
-                            path = reader.GetAttribute("Path");
-                            toname = reader.GetAttribute("ToName");
+                            string label = reader.GetAttribute("Label");
+                            string name = reader.GetAttribute("Name");
+                            string id = reader.GetAttribute("Id");
+                            string cclass = reader.GetAttribute("Class");
+                            string node = reader.GetAttribute("Node");
+                            string type = reader.GetAttribute("Type");
+                            string path = reader.GetAttribute("Path");
+                            string toname = reader.GetAttribute("ToPage");
+                            string enumerable = reader.GetAttribute("IsEnumerable");
+
                             if (pageObject == null)
                             {
                                 Debug.WriteLine("Bad tree XML! A web element was found before a page object! Exiting");
                                 return head;
                             }
-                            webElement = new WebElementNode(pageObject, label, name, id, cclass, node, type, path, toname);
-                            pageObject.Children.Add(webElement);
+
+                            pageObject.Children.Add(new WebElementNode(pageObject, label, name, id, cclass, node, type,
+                                                                       path,
+                                                                       toname, bool.Parse(enumerable)));
                         }
                         else
                         {
-                            folder = new FolderNode(curFolder, reader.Name);
+                            var folder = new FolderNode(curFolder, reader.Name);
                             curFolder.Children.Add(folder);
                             curFolder = folder;
                         }
@@ -162,6 +243,20 @@ namespace Trailbreaker.MainApplication
             return head;
         }
 
+        /// <summary>
+        ///     This is a convenience method to get a set of lines representing a valid (compilable)
+        ///     .cs test class file. It is intended to be used for raw files and Roslyn compilation
+        ///     units.
+        /// </summary>
+        /// <param name="actions">
+        ///     A list of actions a user has made.
+        /// </param>
+        /// <param name="testName">
+        ///     The desired name of the test.
+        /// </param>
+        /// <returns>
+        ///     An IEnumerable of strings, where each string is a line of a valid .cs class file.
+        /// </returns>
         private static IEnumerable<string> BuildTest(List<UserAction> actions, string testName)
         {
             var lines = new List<string>();
@@ -183,6 +278,7 @@ namespace Trailbreaker.MainApplication
             lines.Add("\t\t[Test]");
             lines.Add("\t\tpublic void RunSimple" + testName + "Test()");
             lines.Add("\t\t{");
+            //Uses the NavLab NavigationLinkAttribute.
             lines.Add("\t\t\tSession.CurrentBlock<BusinessModePage>().GoTo<" + testName + ">()");
 
             foreach (UserAction action in actions)
@@ -214,7 +310,17 @@ namespace Trailbreaker.MainApplication
             return lines.ToArray();
         }
 
-        private static void CreateTestRaw(List<UserAction> actions, string testName, bool openFiles)
+        /// <summary>
+        ///     Creates a test by building the lines and writing each one to a file. Also, this
+        ///     method uses ProcessStartInfo to initialize Notepad and open the test.
+        /// </summary>
+        /// <param name="actions">
+        ///     The actions to be used for the test.
+        /// </param>
+        /// <param name="testName">
+        ///     The chosen name of the test.
+        /// </param>
+        private static void CreateTestRaw(List<UserAction> actions, string testName)
         {
             string path = OutputPath + "\\Tests\\" + testName + "Tests.cs";
 
@@ -231,16 +337,13 @@ namespace Trailbreaker.MainApplication
             writer.Close();
             fileStream.Close();
 
-            if (openFiles)
-            {
-                ProcessStartInfo pi = new ProcessStartInfo(path);
-                pi.Arguments = Path.GetFileName(path);
-                pi.UseShellExecute = true;
-                pi.WorkingDirectory = Path.GetDirectoryName(path);
-                pi.FileName = "C:\\Windows\\notepad.exe";
-                pi.Verb = "OPEN";
-                Process.Start(pi);
-            }
+            var pi = new ProcessStartInfo(path);
+            pi.Arguments = Path.GetFileName(path);
+            pi.UseShellExecute = true;
+            pi.WorkingDirectory = Path.GetDirectoryName(path);
+            pi.FileName = "C:\\Windows\\notepad.exe";
+            pi.Verb = "OPEN";
+            Process.Start(pi);
         }
     }
 }

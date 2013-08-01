@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Windows.Forms;
 using System.Xml;
-using Roslyn.Compilers.CSharp;
-using Roslyn.Services;
 
 namespace Trailbreaker.MainApplication
 {
+    /// <summary>
+    ///     Represents a Folder within a hierarchy of page objects. There is currently no way for
+    ///     more of these to be generated, and this is only used for the root node (head).
+    /// </summary>
     public class FolderNode
     {
         public readonly string Title;
@@ -19,16 +19,13 @@ namespace Trailbreaker.MainApplication
             Title = title;
         }
 
-        public virtual TreeNode GetTreeNode()
-        {
-            TreeNode node = new TreeNode(Title);
-            foreach (FolderNode child in Children)
-            {
-                node.Nodes.Add(child.GetTreeNode());
-            }
-            return node;
-        }
-
+        /// <summary>
+        ///     Writes the title of this folder as the start of an XML element, and then fills it
+        ///     with its children.
+        /// </summary>
+        /// <param name="writer">
+        ///     Accepts the primary writer.
+        /// </param>
         public virtual void WriteToXml(XmlTextWriter writer)
         {
             writer.WriteStartElement(Title);
@@ -39,6 +36,12 @@ namespace Trailbreaker.MainApplication
             writer.WriteEndElement();
         }
 
+        /// <summary>
+        ///     This method updates the given user action by passing it onto its children.
+        /// </summary>
+        /// <param name="userAction">
+        ///     A user action which requires an update check.
+        /// </param>
         public virtual void UpdateAction(ref UserAction userAction)
         {
             foreach (FolderNode element in Children)
@@ -47,6 +50,16 @@ namespace Trailbreaker.MainApplication
             }
         }
 
+        /// <summary>
+        ///     This method updates the tree given a user action. If necessary, a new child will
+        ///     be added because the UserAction's page doesn't have a corresponding PageObjectNode.
+        /// </summary>
+        /// <param name="userAction">
+        ///     The UserAction to update the tree with.
+        /// </param>
+        /// <returns>
+        ///     Should only return true unless there was an error.
+        /// </returns>
         public virtual bool Update(UserAction userAction)
         {
             //If this folder doesn't contain the action's page and this is the root then
@@ -68,6 +81,15 @@ namespace Trailbreaker.MainApplication
             return false;
         }
 
+        /// <summary>
+        ///     Checks if this node's children contains the given UserAction.
+        /// </summary>
+        /// <param name="userAction">
+        ///     The UserAction to check.
+        /// </param>
+        /// <returns>
+        ///     True of this node contains a corresponding WebElementNode already.
+        /// </returns>
         public virtual bool Contains(UserAction userAction)
         {
             foreach (FolderNode element in Children)
@@ -80,11 +102,14 @@ namespace Trailbreaker.MainApplication
             return false;
         }
 
-        public virtual void BuildRaw(bool openFiles)
+        /// <summary>
+        ///     Builds the children of this folder to raw files.
+        /// </summary>
+        public virtual void BuildRaw()
         {
             foreach (FolderNode node in Children)
             {
-                node.BuildRaw(openFiles);
+                node.BuildRaw();
             }
         }
     }

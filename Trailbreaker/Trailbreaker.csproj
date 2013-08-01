@@ -89,8 +89,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MainApplication\BlockCreatorGui.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="MainApplication\Exporter.cs" />
-    <Compile Include="MainApplication\GUI.cs">
+    <Compile Include="MainApplication\PageObjectCreatorGui.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="MainApplication\FolderNode.cs" />

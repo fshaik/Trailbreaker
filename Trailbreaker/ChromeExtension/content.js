@@ -1,3 +1,4 @@
+//This recursive function will build a valid XPath in a string and return it, based on a given element.
 function getPathTo(element) {
     if (element.id !== '')
         return 'id("' + element.id + '")';
@@ -17,6 +18,7 @@ function getPathTo(element) {
 
 var entered = "";
 
+//When a key is pressed, communication is made to the application.
 document.onkeypress = function notifyType(event) {
     entered += String.fromCharCode(event.keyCode);
 
@@ -28,58 +30,44 @@ document.onkeypress = function notifyType(event) {
     });
 };
 
+//This function tries to find a set of elements on the given page which are very likely to contain the best name/label/title of a page.
+//The pageObjectIndicators are a set of selectors (from best to worst) which contain text representing the title.
+//More indicators should be found and considered!
 function getPageObject() {
-    var po = "Main";
-
-    var tab = "";
-    tab = $("td.tab-c-sel a").text().replace(/[^\w!?]/g, '').toLowerCase();
-    tab = tab.charAt(0).toUpperCase() + tab.slice(1);
-
-    po = po.concat(" > " + tab);
-
-    var clientPage = "";
-    clientPage = $(".headText").text().replace(/[^\w!?]/g, '');
-
-    po = po.concat(" > " + clientPage);
-
-    var reportTitle = "";
-    reportTitle = $("div.reportTitle").text().replace(/[^\w!?]/g, '');
-
-    po = po.concat(" > " + reportTitle);
-
-    var reportName = "";
-    reportName = $("#report-name").text().replace(/[^\w!?]/g, '');
-
-    po = po.concat(" > " + reportName);
-
-    var breadCrumb = "";
-    breadCrumb = $("span.breadcrumb-item.active").text().replace(/[^\w!?]/g, '');
-
-    po = po.concat(" > " + breadCrumb);
-    
-    return po;
-}
-
-function getPageObject2() {
     var pageObjectIndicators = ["div.page-header h2", "span.breadcrumb-item.active", "#report-name", "div.reportTitle", ".headText", "td.tab-c-sel a"];
     for (var i = 0; i < pageObjectIndicators.length; i++) {
         var po = "";
         if ($(pageObjectIndicators[i]).length > 1) {
-            po = $(pageObjectIndicators[i]).eq(0).text().replace(/[^\w!?]/g, '')
+            po = $(pageObjectIndicators[i]).eq(0).text().replace(/[^\w!?]/g, '');
         } else {
-            po = $(pageObjectIndicators[i]).text().replace(/[^\w!?]/g, '')
+            po = $(pageObjectIndicators[i]).text().replace(/[^\w!?]/g, '');
         }
         if (po != "") {
-//            return pageObjectIndicators[i] + ": " + po;
             return po;
         }
     }
     return "Main";
 }
 
+//This unused function will find the best selector for an element. This is useful when an element has no id, name, or class fields
+//because there may be an element directly behind it which does!
+function findBestSelector(element) {
+    var id = element.getAttribute("id");
+    var name = element.getAttribute("name");
+    var cname = element.getAttribute("class");
+
+    if (id.valueOf() == "null" && name.valueOf() == "null" && cname.valueOf() == "null") {
+        findBestSelector(element.parent);
+    } else {
+        alert("Got |" + id + name + cname + "|");
+    }
+}
+
 var prev_path = 'undefined';
 var count = 0;
 
+//Primary function to be called when an element is clicked. Uses getPathTo and a bunch of metadata to communicate with the
+//application.
 function notifyClick(event) {
     if (event === undefined) event = window.event;
     var target = 'target' in event ? event.target : event.srcElement;
@@ -94,7 +82,7 @@ function notifyClick(event) {
     }
 
     prev_path = path.valueOf();
-    
+
     var payload = {
         Label: "item" + count,
         Name: "" + target.getAttribute("name"),
@@ -104,9 +92,10 @@ function notifyClick(event) {
         Node: target.nodeName.valueOf(),
         Type: "" + target.getAttribute("type"),
         Path: path.valueOf()
-//        Text: entered.valueOf()
     };
-    
+
+//    findBestSelector(target);
+
     $.ajax({
         type: "POST",
         url: "http://localhost:8055/",
@@ -119,6 +108,7 @@ function notifyClick(event) {
     entered = "";
 }
 
+//Everytime the script is loaded, each a, img, and div element on the page will be given the notifyClick onClick event.
 function loadElems() {
     a_elems = document.getElementsByTagName("a");
     for (i = 0, max = a_elems.length; i < max; i++) {
