@@ -105,6 +105,10 @@ namespace Trailbreaker.MainApplication
             {
                 webElementClass = "Checkbox";
             }
+            else if (Node.ToLower() == "input" && Type.ToLower() == "radio")
+            {
+                webElementClass = "RadioButtons";
+            }
             else if (Node.ToLower() == "input" && Type.ToLower() != "button" && Type.ToLower() != "submit")
             {
                 webElementClass = "TextField";
