@@ -88,7 +88,7 @@ function notifyClick(event) {
         Name: "" + target.getAttribute("name"),
         Id: "" + target.getAttribute("id"),
         ClassName: "" + target.getAttribute("class"),
-        Page: getPageObject2(),
+        Page: getPageObject(),
         Node: target.nodeName.valueOf(),
         Type: "" + target.getAttribute("type"),
         Path: path.valueOf()
