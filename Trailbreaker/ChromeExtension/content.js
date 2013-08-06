@@ -1,3 +1,72 @@
+function requestUpdates() {
+
+$.get('http://localhost:8055', function(data){
+    if (String(data) != "0") {
+        var selectorname = String(data);
+
+        if (selectorname.indexOf('By.Name') != -1){
+
+            uniquelement = selectorname.substring(selectorname.indexOf('"')+1, selectorname.lastIndexOf('"'));
+            console.log(uniquelement);
+            boxElement(uniquelement);
+            
+
+        }
+        else if(selectorname.indexOf('By.ClassName') != -1) {
+            uniquelement = selectorname.substring(selectorname.indexOf('"')+1, selectorname.lastIndexOf('"'));
+            console.log(uniquelement);
+            boxElement(uniquelement);
+            
+        }
+        else if(selectorname.indexOf('By.Id') != -1) {
+             console.log('Found!')  
+        }
+        else if(selectorname.indexOf('By.XPath') != -1) {
+            console.log('Found!')
+        }
+        else{
+             console.log('Unknown Identifier')        
+        }
+    }
+
+
+});
+
+}
+
+
+function boxElement(uniqueElement) {
+
+    console.log("Boxing Class")
+    console.log($(uniqueElement).attr('class'))
+
+    if ($(uniqueElement).hasClass("box") ){
+        unBoxElement(uniqueElement);
+    }
+    else {
+       $(uniqueElement).addClass("box"); 
+    }
+
+}
+
+function unBoxElement(uniqueElement) {
+
+    console.log("Unboxing Class")
+    console.log($(uniqueElement).attr('class'))
+
+    requestUpdates();
+
+    if ($(uniqueElement).hasClass("box") ) {
+        $(uniqueElement).removeClass("box");
+    }
+
+}
+
+
+
+
+
+
 //This recursive function will build a valid XPath in a string and return it, based on a given element.
 function getPathTo(element) {
     if (element.id !== '')
@@ -21,6 +90,8 @@ var entered = "";
 //When a key is pressed, communication is made to the application.
 document.onkeypress = function notifyType(event) {
     entered += String.fromCharCode(event.keyCode);
+    
+    requestUpdates();
 
     $.ajax({
         type: "POST",
@@ -81,6 +152,8 @@ function notifyClick(event) {
         return;
     }
 
+    //boxElement(target);
+
     prev_path = path.valueOf();
 
     var payload = {
@@ -95,7 +168,9 @@ function notifyClick(event) {
     };
 
 //    findBestSelector(target);
-
+    
+        requestUpdates();
+        
     $.ajax({
         type: "POST",
         url: "http://localhost:8055/",

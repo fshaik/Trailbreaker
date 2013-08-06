@@ -82,6 +82,26 @@ namespace Trailbreaker.MainApplication
             UpdateGridView();
         }
 
+
+        public override string ShowSelected()
+        {
+
+            try
+            {
+
+                return _grid.SelectedCells[0].Value.ToString();
+
+            }
+            catch
+            {
+                return "0";
+            }
+
+
+        }
+
+
+
         /// <summary>
         ///     Called when the BlockCreator is closed. Simply reclaims the receiving form.
         /// </summary>

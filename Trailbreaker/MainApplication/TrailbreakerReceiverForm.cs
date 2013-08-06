@@ -13,6 +13,7 @@ namespace Trailbreaker.MainApplication
         internal readonly List<UserAction> elements = new List<UserAction>();
         public abstract void AddAction(UserAction userAction);
         public abstract void AddCharacter(char c);
+        public abstract string ShowSelected();
         /// <summary>
         ///     Checks if an action exists in the set of elements.
         /// </summary>

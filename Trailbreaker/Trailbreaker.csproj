@@ -99,6 +99,7 @@
     <Compile Include="MainApplication\FolderNode.cs" />
     <Compile Include="MainApplication\PageObjectNode.cs" />
     <Compile Include="MainApplication\Receiver.cs" />
+    <Compile Include="MainApplication\SendHighlightState.cs" />
     <Compile Include="MainApplication\Start.cs" />
     <Compile Include="MainApplication\TrailbreakerReceiverForm.cs">
       <SubType>Form</SubType>

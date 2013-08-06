@@ -110,6 +110,12 @@ namespace Trailbreaker.MainApplication
                                         //method of the ReceivingForm.
                                         () => _receivingForm.AddCharacter(Convert.ToChar(_bytes[_numBytes - 1]))));
                             }
+                            else
+                            {
+                                Debug.WriteLine(read);
+                                var response = new SendHighlightState(_socket, _receivingForm.ShowSelected());
+
+                            }
                             //Done with this request
                             break;
                         }

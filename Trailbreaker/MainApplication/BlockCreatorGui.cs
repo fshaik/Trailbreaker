@@ -79,6 +79,36 @@ namespace Trailbreaker.MainApplication
             UpdateGridView();
         }
 
+
+
+        public override string ShowSelected()
+        {
+
+            try
+            {
+
+                return _grid.SelectedCells[0].Value.ToString();
+
+            }
+            catch
+            {
+                return "0";
+            }
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
         /// <summary>
         ///     Clears the GUI and asks for a new block name.
         /// </summary>
