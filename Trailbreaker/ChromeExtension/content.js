@@ -1,31 +1,41 @@
+
+
 function requestUpdates() {
 
 $.get('http://localhost:8055', function(data){
     if (String(data) != "0") {
+
+
         var selectorname = String(data);
 
         if (selectorname.indexOf('By.Name') != -1){
 
-            uniquelement = selectorname.substring(selectorname.indexOf('"')+1, selectorname.lastIndexOf('"'));
-            console.log(uniquelement);
-            boxElement(uniquelement);
+            var uniqueName = selectorname.substring(selectorname.indexOf('"')+1, selectorname.lastIndexOf('"'));
+			boxElement(document.getElementsByName(uniqueName));
+			checkUnique(uniqueName);
             
-
         }
         else if(selectorname.indexOf('By.ClassName') != -1) {
-            uniquelement = selectorname.substring(selectorname.indexOf('"')+1, selectorname.lastIndexOf('"'));
-            console.log(uniquelement);
-            boxElement(uniquelement);
+        	
+			var uniqueClass = selectorname.substring(selectorname.indexOf('"')+1, selectorname.lastIndexOf('"'));  
+            boxElement(document.getElementsByClassName(uniqueClass));       
+            checkUnique(uniqueClass);    
             
         }
         else if(selectorname.indexOf('By.Id') != -1) {
-             console.log('Found!')  
+        	
+            var uniqueId = selectorname.substring(selectorname.indexOf('"')+1, selectorname.lastIndexOf('"'));  
+            boxElement(document.getElementById(uniqueId));      
+            checkUnique(uniqueId);    
         }
-        else if(selectorname.indexOf('By.XPath') != -1) {
+        else if(selectorname.indexOf('By.XP-ath') != -1) {
             console.log('Found!')
         }
         else{
-             console.log('Unknown Identifier')        
+             console.log('Unknown Identifier')
+            unBoxElement(document.getElementsByName(lastUniqueSelector));
+        	unBoxElement(document.getElementById(lastUniqueSelector));
+        	unBoxElement(document.getElementsByClassName(lastUniqueSelector));     
         }
     }
 
@@ -34,17 +44,31 @@ $.get('http://localhost:8055', function(data){
 
 }
 
+function checkUnique(selectorname){
+
+	    if (lastUniqueSelector == ' ')
+        {
+        	lastUniqueSelector = selectorname;
+        	console.log('initializing selector ' + lastUniqueSelector);
+        }
+        else if (selectorname != lastUniqueSelector)
+        {
+        	 console.log("Unboxing Class" + lastUniqueSelector)
+        	unBoxElement(document.getElementsByName(lastUniqueSelector));
+        	unBoxElement(document.getElementById(lastUniqueSelector));
+        	unBoxElement(document.getElementsByClassName(lastUniqueSelector));
+        	lastUniqueSelector = selectorname;
+        }
+}
 
 function boxElement(uniqueElement) {
 
-    console.log("Boxing Class")
-    console.log($(uniqueElement).attr('class'))
-
     if ($(uniqueElement).hasClass("box") ){
-        unBoxElement(uniqueElement);
+       // unBoxElement(uniqueElement);
     }
-    else {
-       $(uniqueElement).addClass("box"); 
+    else { 
+    	console.log("Boxing Class");
+       $(uniqueElement).addClass("box");
     }
 
 }
@@ -52,9 +76,8 @@ function boxElement(uniqueElement) {
 function unBoxElement(uniqueElement) {
 
     console.log("Unboxing Class")
-    console.log($(uniqueElement).attr('class'))
 
-    requestUpdates();
+   // requestUpdates();
 
     if ($(uniqueElement).hasClass("box") ) {
         $(uniqueElement).removeClass("box");
@@ -91,7 +114,7 @@ var entered = "";
 document.onkeypress = function notifyType(event) {
     entered += String.fromCharCode(event.keyCode);
     
-    requestUpdates();
+
 
     $.ajax({
         type: "POST",
@@ -200,4 +223,15 @@ function loadElems() {
     document.onclick = notifyClick;
 }
 
+
+var lastUniqueSelector;
+
+$(document).ready(function() {
+		lastUniqueSelector = ' ';
+	});
+
 loadElems();
+
+
+
+window.setInterval( requestUpdates, 1000);
